@@ -1,0 +1,17 @@
+{
+    "resources": {
+        "sounds": [
+            {"name": "menuSelect",
+             "file": "menu-select.ogg"},
+            {"name": "menuvalidate",
+             "file": "menu-validate.ogg"},
+            {"name": "menuCancel",
+             "file": "menu-cancel.ogg"}],
+        "music": [],
+        "controls": {}
+    },
+    "map": {}
+}
+             
+             
+            
