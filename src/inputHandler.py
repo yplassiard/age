@@ -2,15 +2,13 @@
 import pygame
 
 keyboardMap = {
-    pygame.key.K_ESCAPE: "quit",
-    pygame.key.K_ENTER: "action",
-    pygame.key.K_UP: "up",
-    pygame.key.K_DOWN: "down",
-    pygame.key.K_LEFT: "left",
-    pygame.key.K_RIGHT: "right",
-    pygame.key.K_SPACE: "pause",
-    pygame.key.K_Q: "firstButton",
-    pygame.key.K_S: "secondButton"
+    pygame.K_ESCAPE: "quit",
+    pygame.K_RETURN: "action",
+    pygame.K_UP: "up",
+    pygame.K_DOWN: "down",
+    pygame.K_LEFT: "left",
+    pygame.K_RIGHT: "right",
+    pygame.K_SPACE: "pause"
 }
 def action(key):
     """Maps the given keyboard event (or joystick) to an action.)."""

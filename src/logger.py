@@ -29,7 +29,7 @@ class Logger(object):
             self.logIO.write(bytes("{system} {category}: {message}\r\n".format(system=systemName, category=category, message=message), 'utf-8'))
             self.logIO.flush()
         except Exception as e:
-            print("Log failed: {system} {category}: {message}. Caused by {exception}".format(system=system.getLogName(), category=category, message=message, exception=e))
+            print("Log failed: {system} {category}: {message}. Caused by {exception}".format(system=systemName, category=category, message=message, exception=e))
             return False
         return True
 
@@ -66,4 +66,11 @@ def error(system, message):
         _instance.log("Error", system, message)
     else:
         print("Log not initialized: {system}: {message}".format(system=system, message=message))
+
+def exception(system, message, exception):
+    msg = "%s\r\n%s:%s: %s" %(message, __file__, __line__, exception)
+    if _instance is not None:
+        _instance.log("Exception", system, msg)
+    else:
+        print("Log not initialized: {system}: {message}".format(system=system, message=msg))
 

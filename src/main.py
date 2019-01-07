@@ -7,6 +7,7 @@ import gameconfig
 import speech
 import logger
 import audio
+import sceneManager
 
 
 def main():
@@ -14,8 +15,9 @@ def main():
     if speech.initialize() is False:
         logger.error("main", "Failed to start due to a lack of speech support.")
         return False
-    speech.speak("Welcome to A2 Engine!")
+    speech.speak("Welcome to A3 Game Engine!")
     gc = gameconfig.GameConfig("a2engine.json")
+    sceneManager.initialize(gc)
     audioManager = audio.initialize(gc)
     
     pygame.init()
