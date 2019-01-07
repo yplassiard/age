@@ -47,18 +47,18 @@ class Scene(object):
     def getSpeechHint(self):
         return ''
     
-    def onKeyDown(self, key):
+    def onKeyDown(self, key, mods):
         """Fired when a key is pressed (keyboard or joystick.)"""
         
-        action = inputHandler.action(key)
+        action = inputHandler.action(key, mods)
         if action is None:
             return
         script = "input_press_%s" % action
         self.execute(script)
         
-    def onKeyUp(self, key):
+    def onKeyUp(self, key, mods):
         """Fired when a key is released (keyboard or joystick)."""
-        action = inputHandler.action(key)
+        action = inputHandler.action(key, mods)
         script = "script_release_%s" % action
         self.execute(script)
 
@@ -153,9 +153,15 @@ def initialize(gameConfig):
     global _instance
 
     if _instance is None:
-        _instance = SceneManager(gameConfig)
+        try:
+            _instance = SceneManager(gameConfig)
+        except Exception as e:
+            logger.error("sceneManager", "Failed to initialize scene manager: {exception}".format(exception=e))
+            return False
 
     # Load all scenes fresent within the scene directory
+    totalScenes = 0
+    loadedScenes = 0
     try:
         dir = os.scandir(os.path.join(os.path.dirname(os.path.abspath(__file__)), "scenes"))
     except Exception as e:
@@ -165,28 +171,35 @@ def initialize(gameConfig):
         m = re.match("(^[^#]*.*)\.py$", entry.name)
         if m is not None and entry.name != 'scene.py':
             logger.info(_instance, "Loading scene {name}".format(name=m.group(1)))
+            totalScenes += 1
             try:
                 obj = __import__("scenes.%s" % m.group(1), globals(), locals(), ("scenes")).Scene(m.group(1), gameConfig.getSceneConfiguration(m.group(1)))
                 if obj is not None:
                     _instance.addScene(m.group(1), obj)
+                    loadedScenes += 1
             except Exception as e:
                 logger.exception(_instance, "Failed to instanciate scene {name}".format(name=m.group(1)), e)
-                return True
-def onKeyDown(key):
+    if totalScenes > loadedScenes:
+        logger.error(_instance, "{count} scenes failed to load".format(count=totalScenes - loadedScenes))
+        return False
+    logger.info(_instance, "Loaded {count} scenes".format(count=loadedScenes))
+    return True
+
+def onKeyDown(key, mods):
     global _instance
     
     activeScene = _instance.getActiveScene()
     if activeScene is None:
         return
-    activeScene.onKeyDown(key)
+    activeScene.onKeyDown(key, mods)
 
-def onKeyUp(key):
+def onKeyUp(key, mods):
     global _instance
 
     activeScene = _instance.getActiveScene()
     if activeScene is None:
         return
-    activeScene.onKeyUp(key)
+    activeScene.onKeyUp(key, mods)
 
 def loadScene(name):
     global _instance

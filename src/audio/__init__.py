@@ -16,9 +16,13 @@ class AudioManager(object):
     def __init__(self, gameConfig):
         """Initializes the AudioManager with the help of L{GameConfig} object."""
         if gameConfig is None:
-            raise runtime_error("Missing game configuration")
+            raise RuntimeError("Missing game configuration")
         
-        pygame.mixer.init(frequency=44100, channels=2)
+        try:
+            pygame.mixer.init(frequency=44100, channels=2)
+        except:
+            raise RuntimeError("No supported audio device.")
+        
         for sound in gameConfig.getSoundResources():
             logger.info(self, "Loading {name} ({file})".format(name=sound["name"], file=sound["file"]))
             try:
@@ -28,6 +32,7 @@ class AudioManager(object):
                 logger.error(self, "Failed to load {file}: {exception}".format(file=sound["file"], exception=e))
         global _instance
         _instance = self
+
     def play(self, name):
         sndInfo = self.soundMap.get(name, None)
         if sndInfo is not None:
@@ -51,7 +56,12 @@ class AudioManager(object):
     
 def initialize(gameConfig):
     if _instance is not None:
-        am = AudioManager(gameConfig)
+        try:
+            am = AudioManager(gameConfig)
+            return True
+        except Exception as e:
+            logger.error("audio", "Error initializing audio: {exception}".format(exception=e))
+            return False
 
 def play(name):
     global _instance

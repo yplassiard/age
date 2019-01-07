@@ -18,8 +18,15 @@ def main():
     speech.cancelSpeech()
     speech.speak("Welcome to A3 Game Engine!")
     gc = gameconfig.GameConfig("a3g-engine.json")
-    sceneManager.initialize(gc)
-    audioManager = audio.initialize(gc)
+    if gc is None:
+        logger.error("main", "Invalid configuration.")
+        return
+    if sceneManager.initialize(gc) is False:
+        logger.error("main", "Unable to initialize scenes.")
+        return
+    if audio.initialize(gc) is False:
+        logger.error("main", "Failed to initialize sound support.")
+        return
     
     pygame.init()
     vi = pygame.display.Info()
@@ -36,18 +43,24 @@ def main():
     background.blit(text, textpos)
     screen.blit(background, (0, 0))
     pygame.display.flip()
-
-    sceneManager.loadScene("mainmenu")
+    ticks = pygame.time.get_ticks()
     while 1:
         for event in pygame.event.get():
-            if event.type == QUIT:
+            if event.type == pygame.VIDEOEXPOSE:
+                sceneManager.loadScene("mainmenu")
+            elif event.type == QUIT:
                 return
             elif event.type == pygame.KEYDOWN:
-                sceneManager.onKeyDown(event.key)
+                sceneManager.onKeyDown(event.key, event.mod)
             elif event.type == pygame.KEYUP:
-                sceneManager.onKeyUp(event.key)
+                sceneManager.onKeyUp(event.key, event.mod)
             # screen.blit(background, (0, 0))
             # pygame.display.flip()
 
+        if pygame.time.get_ticks() - ticks == 0:
+            pygame.time.wait(1)
+        ticks = pygame.time.get_ticks()
+    logger.log("main", "Exiting game.")
+    
 if __name__ == '__main__':
     main()
