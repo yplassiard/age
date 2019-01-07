@@ -5,36 +5,37 @@ import os, re
 import logger
 import audio
 import inputHandler
+import speech
 
 class Scene(object):
     """Defines a scene representing a particular in-game behavior."""
 
     focused = False
-    enterSound = None
-    leaveSound = None
+    activateSound = None
+    deacsjvateSound = None
 
     def __init__(self, name, config):
         self.name = name
         if config is not None:
             self.config = config
-            self.enterSound = config.get("enterSound", None)
-            self.leaveSound = config.get("leaveSound", None)
+            self.activateSound = config.get("enterSound", None)
+            self.deactivateSound = config.get("leaveSound", None)
 
     def activate(self, silent=False):
         if self.focused:
             return True
         self.focused = True
         logger.info(self, "Scene {name} activated.".format(name=self.name))
-        if silent is False and self.openSound is not None:
-            audio.play(self.enterSound)
+        if silent is False and self.activateSound is not None:
+            audio.play(self.activateSound)
 
     def deactivate(self, silent=False):
         if self.focused is False:
             return
         self.focused = False
         logger.info(self, "Leaving scene {name}".format(name=self.name))
-        if silent is False and self.leaveSound is not None:
-            audio.play(self.leaveSound)
+        if silent is False and self.deactivateSound is not None:
+            audio.play(self.deactivateSound)
             
 
     def getSpeechName(self):
@@ -57,7 +58,7 @@ class Scene(object):
         
     def onKeyUp(self, key):
         """Fired when a key is released (keyboard or joystick)."""
-        action = inputHandrer.action(key)
+        action = inputHandler.action(key)
         script = "script_release_%s" % action
         self.execute(script)
 
@@ -66,16 +67,61 @@ class Scene(object):
         method = getattr(self, script, None)
         if method:
             try:
-                method(self)
+                method()
             except Exception as e:
-                logger.error(self, "Error executing action {action}: {exception}".format(action=action, exception=e))
+                logger.error(self, "Error executing action {action}: {exception}".format(action=script, exception=e))
                 audio.play(audio.ERROR_SOUND)
 
 
 _instance = None
 
+
+class MenuScene(Scene):
+    """This class implements a simple vertical menu.
+Each choice is represented as a string, and is defined in the scene configuration, using the
+'choices' attribute. The 'default-choice' attribute instructs the widget to focus on this
+particular choice. This value is an index within the choices' list, starting at 0."""
+    choices = []
+    default = 0
+    idx = 0
+    
+    def __init__(self, name, config):
+        super().__init__(name, config)
+        if config is not None:
+            self.choices = config.get("choices", [])
+            self.default = config.get('default-choice', 0)
+            if self.default <= 0 or self.default > len(self.choices):
+                self.default = 0
+            self.idx = self.default
+            if config.get('speak-title', False) is True:
+                speech.speak(self.title)
+            speech.speak(self.choices[self.idx])
+    def getLogName(self):
+        return 'menu'
+    
+    def input_press_down(self):
+        self.idx = (self.idx + 1) % len(self.choices)
+        try:
+            choice = self.choices[self.idx]
+        except Exception as e:
+            logger.error(self, "Error reading menu item from list: {exception}".format(exception=e))
+            return
+        speech.cancelSpeech()
+        speech.speak(choice)
+
+    def input_press_up(self):
+        self.idx = (self.idx - 1) % len(self.choices)
+        try:
+            choice = self.choices[self.idx]
+        except:
+            return
+        speech.cancelSpeech()
+        speech.speak(choice)
+
+
 class SceneManager(object):
     scenes = {}
+    activeScene = None
 
     def __init__(self, gameConfig):
         pass
@@ -94,9 +140,9 @@ class SceneManager(object):
             logger.error(self, "Scene {name} not found".format(name=sceneName))
             return False
         if self.activeScene is not None:
-            self.activeScene.leave(silentLeaving)
+            self.activeScene.deactivate(silentLeaving)
         self.activeScene = s
-        s.enter(silentEntering)
+        s.activate(silentEntering)
 
     def getActiveScene(self):
         return self.activeScene
@@ -126,3 +172,23 @@ def initialize(gameConfig):
             except Exception as e:
                 logger.exception(_instance, "Failed to instanciate scene {name}".format(name=m.group(1)), e)
                 return True
+def onKeyDown(key):
+    global _instance
+    
+    activeScene = _instance.getActiveScene()
+    if activeScene is None:
+        return
+    activeScene.onKeyDown(key)
+
+def onKeyUp(key):
+    global _instance
+
+    activeScene = _instance.getActiveScene()
+    if activeScene is None:
+        return
+    activeScene.onKeyUp(key)
+
+def loadScene(name):
+    global _instance
+
+    _instance.load(name)

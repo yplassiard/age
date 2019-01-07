@@ -25,6 +25,7 @@ class NVDASupport(speech.SpeechSupport):
         if self.active is False:
             return
         self.nvdaLibrary.nvdaController_speakText(message)
+        logger.info(self, "speak(%s)"% message)
         
     def cancelSpeech(self):
         if self.active is False:

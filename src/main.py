@@ -15,8 +15,9 @@ def main():
     if speech.initialize() is False:
         logger.error("main", "Failed to start due to a lack of speech support.")
         return False
+    speech.cancelSpeech()
     speech.speak("Welcome to A3 Game Engine!")
-    gc = gameconfig.GameConfig("a2engine.json")
+    gc = gameconfig.GameConfig("a3g-engine.json")
     sceneManager.initialize(gc)
     audioManager = audio.initialize(gc)
     
@@ -28,7 +29,7 @@ def main():
     background = background.convert()
     background.fill((0, 0, 0))
     font = pygame.font.Font(None, 36)
-    text = font.render('A2 Engine', 1, (250, 250, 250))
+    text = font.render('A3 Game Engine', 1, (250, 250, 250))
     textpos = text.get_rect()
     textpos.centerx = background.get_rect().centerx
     textpos.centery = background.get_rect().centery
@@ -36,12 +37,17 @@ def main():
     screen.blit(background, (0, 0))
     pygame.display.flip()
 
+    sceneManager.loadScene("mainmenu")
     while 1:
         for event in pygame.event.get():
             if event.type == QUIT:
                 return
-            screen.blit(background, (0, 0))
-            pygame.display.flip()
+            elif event.type == pygame.KEYDOWN:
+                sceneManager.onKeyDown(event.key)
+            elif event.type == pygame.KEYUP:
+                sceneManager.onKeyUp(event.key)
+            # screen.blit(background, (0, 0))
+            # pygame.display.flip()
 
 if __name__ == '__main__':
     main()

@@ -4,7 +4,7 @@ import io
 class Logger(object):
     """Log events add information while the game is running."""
 
-    logFile = "a2engine.log"
+    logFile = "a3g-engine.log"
     logIO = None
 
     def __init__(self, file=None):

@@ -15,9 +15,9 @@ def action(key):
 
     global keyboardMap
     
-    for k in keyboardMap:
-        ret = k.get(key, None)
-        if ret is not None:
-            return ret
+
+    ret = keyboardMap.get(key, None)
+    if ret is not None:
+        return ret
     return None
 
