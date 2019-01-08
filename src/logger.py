@@ -3,6 +3,8 @@
 import io
 import pygame
 
+import eventManager
+
 class Logger(object):
     """Log events add information while the game is running."""
 
@@ -10,6 +12,7 @@ class Logger(object):
     logIO = None
 
     def __init__(self, file=None):
+        eventManager.addListener(self)
         self.ticks = pygame.time.get_ticks()
         if file is not None:
             self.logFile = file
@@ -39,7 +42,7 @@ class Logger(object):
     def getLogName(self):
         return 'logger'
     
-    def terminate(self):
+    def event_quit_game(self, data):
         self.log('Info', self, "Loggging system terminated")
         self.logIO.close()
         self.logIO = None
@@ -69,11 +72,4 @@ def error(system, message):
         _instance.log("Error", system, message)
     else:
         print("Log not initialized: {system}: {message}".format(system=system, message=message))
-
-def exception(system, message, exception):
-    msg = "%s\r\n%s:%s: %s" %(message, __file__, __line__, exception)
-    if _instance is not None:
-        _instance.log("Exception", system, msg)
-    else:
-        print("Log not initialized: {system}: {message}".format(system=system, message=msg))
 

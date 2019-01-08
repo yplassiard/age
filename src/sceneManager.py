@@ -2,9 +2,12 @@
 
 import os, re
 
+import pygame
+
 import logger
 import audio
 import inputHandler
+import eventManager
 import speech
 
 class Scene(object):
@@ -78,12 +81,19 @@ _instance = None
 
 class MenuScene(Scene):
     """This class implements a simple vertical menu.
-Each choice is represented as a string, and is defined in the scene configuration, using the
-'choices' attribute. The 'default-choice' attribute instructs the widget to focus on this
-particular choice. This value is an index within the choices' list, starting at 0."""
+Each choice is represented as a string or an array of strings, and is defined in the scene
+configuration, using the 'choices' attribute. The 'default-choice' attribute instructs the widget
+to focus on this particular choice. This value is an index within the choices' list, starting at 
+0.
+When represented as an array of strings, the first element is considered as a label, subsequent
+elements are possible values the user can choose from for this choice. This behavior makes it
+possible to implement option selection."""
     choices = []
     default = 0
     idx = 0
+    choiceIdx = -1
+    selectedIdx = -1
+    options = {}
     
     def __init__(self, name, config):
         super().__init__(name, config)
@@ -93,9 +103,11 @@ particular choice. This value is an index within the choices' list, starting at 
             if self.default <= 0 or self.default > len(self.choices):
                 self.default = 0
             self.idx = self.default
+            self.selectedIdx = self.idx
             if config.get('speak-title', False) is True:
                 speech.speak(self.title)
-            speech.speak(self.choices[self.idx])
+            self.speakChoice()
+
     def getLogName(self):
         return 'menu'
     
@@ -107,7 +119,7 @@ particular choice. This value is an index within the choices' list, starting at 
             logger.error(self, "Error reading menu item from list: {exception}".format(exception=e))
             return
         speech.cancelSpeech()
-        speech.speak(choice)
+        self.speakChoice()
 
     def input_press_up(self):
         self.idx = (self.idx - 1) % len(self.choices)
@@ -116,15 +128,44 @@ particular choice. This value is an index within the choices' list, starting at 
         except:
             return
         speech.cancelSpeech()
-        speech.speak(choice)
+        self.speakChoice()
 
-
+    def input_press_right(self):
+        if self.choiceIdx != -1:
+            self.choiceIdx += 1
+            if self.choiceIdx == len(self.choices[self.idx]):
+                self.choiceIdx = 1
+            self.options[self.idx] = self.choiceIdx
+            self.speakChoice()
+    def input_press_left(self):
+        if self.choiceIdx != -1:
+            self.choiceIdx -= 1
+            if self.choiceIdx == 0:
+                self.choiceIdx = len(self.choices[self.idx]) - 1
+            self.options[self.idx] = self.choiceIdx
+            self.speakChoice()
+    def input_press_action(self):
+        leaveCurrentScene()
+        
+    def speakChoice(self):
+        try:
+            choice = self.choices[self.idx]
+            if isinstance(choice, str):
+                self.choiceIdx = -1
+                speech.speak(choice)
+            elif isinstance(choice, list):
+                self.choiceIdx = self.options.get(self.idx, 1)
+                msg = "{choice}: {selected}".format(choice=choice[0], selected=choice[self.choiceIdx])
+                speech.speak(msg)
+        except Exception as e:
+            logger.error(self, "Failed speak menu itcem: {exception}".format(exception=e))
+            return
 class SceneManager(object):
     scenes = {}
     activeScene = None
 
     def __init__(self, gameConfig):
-        pass
+        eventManager.addListener(self)
 
     def getLogName(self):
         return 'SceneManager'
@@ -144,10 +185,41 @@ class SceneManager(object):
         self.activeScene = s
         s.activate(silentEntering)
 
+    def leave(self, silentLeaving=False):
+        if self.activeScene is not None:
+            self.activeScene.deactivate(silentLeaving)
+            eventManager.post(eventManager.LEAVE_SCENE, {"scene": self.activeScene})
+            self.activeScene = None
+            
     def getActiveScene(self):
         return self.activeScene
 
-    
+
+    # events
+
+    def event_leave_scene(self, event):
+        if self.activeScene is None:
+            eventManager.post(eventManager.QUIT_GAME)
+
+
+    def event_quit_game(self, event):
+        for key in self.scenes:
+            self.execute('event_quit_game')
+        self.scenes = {}
+        pygame.event.post(pygame.event.Event(pygame.QUIT))
+
+    def event_pause_game(self, event):
+        self.execute('event_pause_game', event.data)
+
+    def execute(self, script, data=None):
+        if self.activeScene:
+            method = getattr(self.activeScene, script)
+            if method:
+                try:
+                    method(data)
+                except Exception as e:
+                    logger.error(self, "Failed to execute {name}.{script}: {exception}".format(name=self.activeScene.__class__.__name__, script=script, exception=e))
+
 
 def initialize(gameConfig):
     global _instance
@@ -178,7 +250,7 @@ def initialize(gameConfig):
                     _instance.addScene(m.group(1), obj)
                     loadedScenes += 1
             except Exception as e:
-                logger.exception(_instance, "Failed to instanciate scene {name}".format(name=m.group(1)), e)
+                logger.error(_instance, "Failed to instanciate scene {name}: {exception}".format(name=m.group(1), exception=ee))
     if totalScenes > loadedScenes:
         logger.error(_instance, "{count} scenes failed to load".format(count=totalScenes - loadedScenes))
         return False
@@ -205,3 +277,8 @@ def loadScene(name):
     global _instance
 
     _instance.load(name)
+
+def leaveCurrentScene():
+    global _instance
+
+    _instance.leave()

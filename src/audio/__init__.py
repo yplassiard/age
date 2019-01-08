@@ -1,6 +1,7 @@
 # *-* coding: utf-8 *-*
 
 import logger
+import eventManager
 import pygame
 import os
 
@@ -17,7 +18,7 @@ class AudioManager(object):
         """Initializes the AudioManager with the help of L{GameConfig} object."""
         if gameConfig is None:
             raise RuntimeError("Missing game configuration")
-        
+        eventManager.addListener(self)
         try:
             pygame.mixer.init(frequency=44100, channels=2)
         except:

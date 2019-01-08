@@ -7,6 +7,7 @@ import gameconfig
 import speech
 import logger
 import audio
+import eventManager
 import sceneManager
 
 
@@ -50,6 +51,8 @@ def main():
                 sceneManager.loadScene("mainmenu")
             elif event.type == QUIT:
                 return
+            elif event.type == pygame.USEREVENT:
+                eventManager.dispatch(event)
             elif event.type == pygame.KEYDOWN:
                 sceneManager.onKeyDown(event.key, event.mod)
             elif event.type == pygame.KEYUP:
