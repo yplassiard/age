@@ -1,0 +1,12 @@
+{
+    "title": "Main Menu",
+    "name": "mainmenu",
+    "type": "menu",
+    "speak-title": true,
+    "choices": ["Start new adventure", "Continue adventure", "Exit"],
+    "links": {
+        "0": "new_adventure",
+        "1": "continue_adventure",
+        "2": "__quit"
+    }
+}

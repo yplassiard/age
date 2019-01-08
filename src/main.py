@@ -24,6 +24,7 @@ def main():
         return
     if sceneManager.initialize(gc) is False:
         logger.error("main", "Unable to initialize scenes.")
+        print("Unable to initialize scenes: Check the logfile for more details.")
         return
     if audio.initialize(gc) is False:
         logger.error("main", "Failed to initialize sound support.")
@@ -45,10 +46,13 @@ def main():
     screen.blit(background, (0, 0))
     pygame.display.flip()
     ticks = pygame.time.get_ticks()
+    intervalTicks = ticks
     while 1:
         for event in pygame.event.get():
             if event.type == pygame.VIDEOEXPOSE:
-                sceneManager.loadScene("mainmenu")
+                if sceneManager.loadScene(gc.getStartScene()) is False:
+                    print("Failed to load first scene {name}".format(name=gc.getStartScene()))
+                    return
             elif event.type == QUIT:
                 return
             elif event.type == pygame.USEREVENT:
@@ -60,9 +64,10 @@ def main():
             # screen.blit(background, (0, 0))
             # pygame.display.flip()
 
-        if pygame.time.get_ticks() - ticks == 0:
-            pygame.time.wait(1)
-        ticks = pygame.time.get_ticks()
+        now = pygame.time.get_ticks()
+        if now - intervalTicks > 5:
+            eventManager.post(eventManager.SCENE_INTERVAL_TICK, {"time": now})
+            intervalTicks = now
     logger.log("main", "Exiting game.")
     
 if __name__ == '__main__':

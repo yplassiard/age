@@ -1,0 +1,12 @@
+{
+    "name": "new_adventure",
+    "interval": 3000,
+    "type": "storytext",
+    "story": [
+        "Help...",
+        "Please, help me...",
+        "I'm...",
+        "I gonna die... soon..."
+    ],
+    "links": "mainmenu"
+}

@@ -1,6 +1,6 @@
 # *-* coding: utf-8 *-*
 
-import io
+import io, os
 import json
 import logger
 
@@ -42,8 +42,20 @@ class GameConfig(object):
         sceneConfig = self.config["scenes"].get(name, None)
         if isinstance(sceneConfig, dict):
             return sceneConfig
-        return None
-    
+        elif isinstance(sceneConfig, str):
+            return self.loadSceneConfiguration(sceneConfig)
+    def loadSceneConfiguration(self, jsonFile):
+        file = os.path.join(os.path.abspath("."), "data", "scenes", jsonFile)
+        try:
+            conf = io.FileIO(file)
+            jsonConfig = json.load(conf)
+        except Exception as e:
+            logger.error(self, "Failed to load {file}: {exception}".format(file=jsonFile, exception=e))
+            return None
+        return jsonConfig
+
+    def getStartScene(self):
+        return self.config.get('start-scene', 'main')
     def getControlResources(self):
         try:
             return self.config["resources"]["controls"]

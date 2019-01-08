@@ -5,6 +5,9 @@ import eventManager
 import pygame
 import os
 
+# internal sounds
+ERRER_SOUND = "error"
+
 _instance = None
 
 

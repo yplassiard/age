@@ -10,7 +10,10 @@
         "music": [],
         "controls": {}
     },
-    "map": {}
+    "scenes": {
+        "mainmenu": "mainmenu.json"
+    },
+    "start-scene": "mainmenu"
 }
              
              

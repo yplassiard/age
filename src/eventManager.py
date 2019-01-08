@@ -13,6 +13,11 @@ PAUSE_GAME = 3
 # scene events
 LOAD_SCENE = 10
 LEAVE_SCENE = 11
+LEAVE_CURRENT_SCENE = 12
+SCENE_INTERVAL_ACTIVATE = 13
+SCENE_INTERVAL_DEACTIVATE = 14
+SCENE_INTERVAL_TICK = 15
+
 
 
 # List objects receiving custom game events.
@@ -22,6 +27,10 @@ eventListeners = []
 eventNames = {
     LOAD_SCENE: "load_scene",
     LEAVE_SCENE: "leave_scene",
+    LEAVE_CURRENT_SCENE: "leave_current_scene",
+    SCENE_INTERVAL_ACTIVATE: "scene_interval_activate",
+    SCENE_INTERVAL_DEACTIVATE: "scene_interval_deactivate",
+    SCENE_INTERVAL_TICK: "scene_interval_tick",
     QUIT_GAME: "quit_game",
     PAUSE_GAME: "pause_game"
 }
@@ -54,7 +63,7 @@ def dispatch(event):
         method = getattr(listener, script, None)
         if method:
             try:
-                method(event.dict)
+                method(event.data)
             except Exception as e:
-                logger.error("eventManager", "Failed to execute {name}.{script}: {exception}".format(name=listener.__class__.__name__, sccript=script, exception=e))
+                logger.error("eventManager", "Failed to execute {name}.{script}({event}): {exception}".format(name=listener.__class__.__name__, script=script, event=event, exception=e))
                 continue
