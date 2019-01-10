@@ -1,6 +1,7 @@
 # *-* coding: utf-8 *-*
 
 import logger
+import constants
 import eventManager
 import pygame
 import os
@@ -27,7 +28,8 @@ class AudioManager(object):
             raise RuntimeError("Missing game configuration")
         eventManager.addListener(self)
 
-        pygame.mixer.init(frequency=44100)
+        pygame.mixer.pre_init(44100, -16, 2, 512)
+        pygame.mixer.init()
         for sound in gameConfig.getSoundResources():
             logger.info(self, "Loading {name} ({file})".format(name=sound["name"], file=sound["file"]))
             try:
@@ -44,7 +46,10 @@ class AudioManager(object):
         left = volume * pan[0]
         right = volume * pan[1]
         if sndInfo is not None:
-            sndInfo["channel"] = sndInfo["sound"].play()
+            if sndInfo["channel"] is not None:
+                sndInfo["channel"].play(sndInfo["sound"])
+            else:
+                sndInfo["channel"] = sndInfo["sound"].play()
             sndInfo["channel"].set_volume(left, right)
             sndInfo["playing"] = True
             # logger.debug(self, "Playing {name}({volume}, {left}, {right})".format(name=name, volume=volume, left=left, right=right))
@@ -68,7 +73,7 @@ def initialize(gameConfig):
             logger.error("audio", "Error initializing audio: {exception}".format(exception=e))
             return False
 
-def play(name, volume, pan=(1.0, 1.0)):
+def play(name, volume=constants.AUDIO_FX_VOLUME, pan=(1.0, 1.0)):
     global _instance
 
     _instance.play(name, volume, pan)

@@ -10,7 +10,11 @@
             {"name": "menuvalidate",
              "file": "menu-validate.ogg"},
             {"name": "menuCancel",
-             "file": "menu-cancel.ogg"}],
+             "file": "menu-cancel.ogg"},
+            {"name": "message",
+             "file": "message.wav"},
+            {"name": "messageFinished",
+             "file": "message-finished.wav"}],
         "music": [],
         "controls": {}
     },

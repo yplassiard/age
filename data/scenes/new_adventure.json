@@ -1,12 +1,12 @@
 {
     "name": "new_adventure",
-    "interval": 3000,
+    "interval": 30,
     "type": "storytext",
     "story": [
-        "Help...",
-        "Please, help me...",
-        "I'm...",
-        "I gonna die... soon..."
+        "Pitié...",
+        "Est-ce que quelqu'un m'entend ?",
+        "Dites-moi que ça a marché et que vous pouvez m'entendre!",
+        "Je..."
     ],
     "links": "mainmenu"
 }

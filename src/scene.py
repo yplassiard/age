@@ -231,16 +231,23 @@ class StoryTextScene(IntervalScene):
 each one read aloud after the other.
 You can configure this widget to scroll the text automatically if the 'interval' key is defined
 to an integer within the scene configuration."""
+    canSkip = False
+    charIdx = 0
     def __init__(self, name, config):
         super().__init__(name, config)
         self.story = self.config.get('story', [])
+        self.messageWriteSound = self.config.get('message-write-sound', None)
+        self.messageWriteSoundVolume = self.config.get('message-write-sound-volume', 0.8)
+        
         if len(self.story) == 0:
             raise RuntimeError("StoryText scene with empty story")
 
     def activate(self, silent=False):
         self.idx = 0
+        self.canSkip = False
+        self.charIdx = 0
         super().activate(silent)
-        self.speak()
+
 
     def getLogName(self):
         return 'StoryText'
@@ -248,21 +255,36 @@ to an integer within the scene configuration."""
     def speak(self):
         speech.speak(self.story[self.idx])
     def input_press_action(self):
+        if not self.canSkip:
+            return
         self.idx += 1
+        self.canSkip = False
         if self.idx == len(self.story):
             leaveCurrentScene()
         else:
-            self.speak()
+            self.charIdx = 0
+
     def getNextScene(self):
         return self.links
 
     def input_press_up(self):
-        self.speak()
+        if self.canSkip:
+            self.speak()
+            
     def input_press_down(self):
-        self.speak()
+        if self.canSkip:
+            self.speak()
 
     def event_interval(self):
-        self.input_press_action()
+        if self.canSkip is False:
+            audio.play(constants.AUDIO_MESSAGE_SOUND)
+        self.charIdx += 1
+        if self.charIdx == len(self.story[self.idx]):
+            audio.play(constants.AUDIO_MESSAGE_FINISH_SOUND)
+            self.canSkip = True
+            self.speak()    
+        
+        
     
     
         
