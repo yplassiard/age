@@ -78,7 +78,7 @@ class Scene(object):
                 method()
             except Exception as e:
                 logger.error(self, "Error executing action {action}: {exception}".format(action=script, exception=e))
-                audio.play(audio.ERROR_SOUND)
+                audio.play(constants.AUDIO_ERROR_SOUND)
 
 
 
@@ -115,14 +115,23 @@ possible to implement option selection."""
     choices = []
     default = 0
     idx = 0
+    title = 'Unknown'
+    speakTitle = True
     choiceIdx = -1
     selectedIdx = -1
     options = {}
+    selectSound = None
+    selectSoundVolume = 0.8
+    validateSound = None
+    validateSoundVolume = 0.8
+    cancelSound = None
+    cancelSoundVolume = 0.8
+    
     
     def __init__(self, name, config):
         super().__init__(name, config)
         if config is None:
-            raise RuntimeError("Need a configuration object.")
+            return
         self.choices = config.get("choices", None)
         if self.choices is None:
             raise RuntimeError("No menu items provided.")
@@ -133,6 +142,15 @@ possible to implement option selection."""
         self.selectedIdx = self.idx
         self.speakTitle = config.get("speak-title", True)
         self.title = config.get('title', 'unknown')
+        self.selectSound = config.get('select-sound', None)
+        self.selectSoundVolume = config.get("select-sound-volume", 0.8)
+        self.validateSound = config.get('validate-sound', None)
+        self.validateSoundVolume = config.get('validate-sound-volume', 0.8)
+        self.cancelSound = config.get('cancel-sound', None)
+        self.cancelSoundVolume = config.get('cancel-sound-volume', 0.8)
+        self.useStereo = config.get('use-stereo', True)
+
+        
 
     
     def getLogName(self):
@@ -152,6 +170,7 @@ possible to implement option selection."""
             logger.error(self, "Error reading menu item from list: {exception}".format(exception=e))
             return
         speech.cancelSpeech()
+        audio.play(self.selectSound, self.selectSoundVolume, audio.computePan(0, len(self.choices) - 1, self.idx))
         self.speakChoice()
 
     def input_press_up(self):
@@ -161,6 +180,7 @@ possible to implement option selection."""
         except:
             return
         speech.cancelSpeech()
+        audio.play(self.selectSound, self.selectSoundVolume, audio.computePan(0, len(self.choices) - 1, self.idx))
         self.speakChoice()
 
     def input_press_right(self):
@@ -169,13 +189,16 @@ possible to implement option selection."""
             if self.choiceIdx == len(self.choices[self.idx]):
                 self.choiceIdx = 1
             self.options[self.idx] = self.choiceIdx
+            audio.play(self.selectSound)
             self.speakChoice()
+
     def input_press_left(self):
         if self.choiceIdx != -1:
             self.choiceIdx -= 1
             if self.choiceIdx == 0:
                 self.choiceIdx = len(self.choices[self.idx]) - 1
             self.options[self.idx] = self.choiceIdx
+            audio.play(self.selectSound)
             self.speakChoice()
 
     def input_press_action(self):
@@ -186,7 +209,7 @@ possible to implement option selection."""
         """Returns the next scene to activate depending on the user's choice."""
         answer = self.links.get(str(self.idx), None)
         if answer is None:
-            audio.play(audio.ERROR_SOUND)
+            audio.play(constants.AUDIO_ERROR_SOUND)
             return
         return answer
     def speakChoice(self):

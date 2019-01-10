@@ -13,15 +13,15 @@ import sceneManager
 
 def main():
     logger.initialize()
+    gc = gameconfig.GameConfig("a3g-engine.json")
+    if gc is None:
+        logger.error("main", "Invalid configuration.")
+        return
     if speech.initialize() is False:
         logger.error("main", "Failed to start due to a lack of speech support.")
         return False
     speech.cancelSpeech()
     speech.speak("Welcome to A3 Game Engine!")
-    gc = gameconfig.GameConfig("a3g-engine.json")
-    if gc is None:
-        logger.error("main", "Invalid configuration.")
-        return
     if sceneManager.initialize(gc) is False:
         logger.error("main", "Unable to initialize scenes.")
         print("Unable to initialize scenes: Check the logfile for more details.")

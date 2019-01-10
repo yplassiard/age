@@ -1,8 +1,9 @@
 # *-* coding: utf-8 *-*
 
-import io, os
+import io, os, platform, sys
 import json
 import logger
+import constants
 
 config = None
 
@@ -17,6 +18,7 @@ class GameConfig(object):
             self.config = json.loads(data)
             global config
             config = self
+            sys.path.append(self.getLibraryPath())
         except Exception as e:
             logger.error(self, "failed to load file: %s" %(e))
             
@@ -65,7 +67,21 @@ class GameConfig(object):
 
           
 
+    def getLibraryPath(self):
+        return os.path.join(constants.CONFIG_RESOURCE_DIR, platform.system().lower(), platform.architecture()[0])
+    
+    
     def getLogName(self):
         return "Configuration"
     
             
+
+
+def getLibraryPath():
+    """Returns the path to 3rd party libraries (DLL, DyLib, SO)."""
+    global config
+
+    if config is not None:
+        return config.getLibraryPath()
+    else:
+        raise RuntimeError("getLibraryPath(): Configuration not loaded.")

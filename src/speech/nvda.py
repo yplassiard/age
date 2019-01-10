@@ -4,12 +4,16 @@ import ctypes, os
 from ctypes import *
 
 import logger
+import constants
+import gameconfig
+
 import speech
 class NVDASupport(speech.SpeechSupport):
     nvdaLibrary = None
 
     def __init__(self):
-        self.nvdaLibrary = windll.LoadLibrary(os.path.join("res", "win32", "nvdaControllerClient.dll"))
+        path = os.path.join(gameconfig.getLibraryPath(), "nvdaControllerClient.dll")
+        self.nvdaLibrary = windll.LoadLibrary(path)
         ret = self.nvdaLibrary.nvdaController_testIfRunning()
         if ret == 0:
             logger.info(self, "Using NVDA as speech output.")

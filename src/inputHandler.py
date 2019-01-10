@@ -17,7 +17,7 @@ def action(key, mods):
     global keyboardMap
     
 
-    ret = keyboardMap.get(key, None)
+    ret = keyboardMap.get(key, pygame.key.name(key))
     if ret is not None:
         if mods & pygame.KMOD_SHIFT:
             ret = "shift_%s" % ret
@@ -29,4 +29,5 @@ def action(key, mods):
             ret = "windows_%s" % ret
         return ret
     return None
+
 

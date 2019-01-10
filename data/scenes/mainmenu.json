@@ -8,5 +8,6 @@
         "0": "new_adventure",
         "1": "continue_adventure",
         "2": "__quit"
-    }
+    },
+    "select-sound": "menuSelect"
 }

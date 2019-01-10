@@ -1,6 +1,10 @@
 {
     "resources": {
         "sounds": [
+            {
+                "name": "error-sound",
+                "file": "error-sound.ogg"
+            },
             {"name": "menuSelect",
              "file": "menu-select.ogg"},
             {"name": "menuvalidate",

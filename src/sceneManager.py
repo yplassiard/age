@@ -4,6 +4,7 @@ import os, re
 
 import pygame
 
+import constants
 import logger
 import audio
 import inputHandler
@@ -58,6 +59,7 @@ class SceneManager(object):
         s = self.scenes.get(sceneName, None)
         if s is None:
             logger.error(self, "Scene {name} not found".format(name=sceneName))
+            audio.play(constants.AUDIO_ERROR_SOUND)
             return False
         if self.activeScene is not None:
             self.activeScene.deactivate(silentLeaving)
@@ -75,7 +77,7 @@ class SceneManager(object):
             else:
                 if self.load(nextScene) is False:
                     speech.speak("scene {name} not created yet.".format(name=nextScene))
-            
+                    
     def getActiveScene(self):
         return self.activeScene
 
@@ -89,12 +91,12 @@ class SceneManager(object):
 
     def event_quit_game(self, event):
         for key in self.scenes:
-            self.execute('event_quit_game')
-        self.scenes = {}
-        pygame.event.post(pygame.event.Event(pygame.QUIT))
+            self.execute('event_quit_game', target=key)
+            self.scenes = {}
+            pygame.event.post(pygame.event.Event(pygame.QUIT))
 
     def event_pause_game(self, event):
-        self.execute('event_pause_game', event.data)
+        self.execute('event_pause_game', evt, target=self.activeScene)
 
     def event_leave_current_scene(self, event):
         self.leave()
@@ -116,10 +118,12 @@ class SceneManager(object):
                 self.intervalScenes.pop(idx)
                 return
             idx += 1
-        logger.error(self, "Failed to remove scene from interval scenes: {name}: {exception}".format(name=scene.name, exception=e))
+            logger.error(self, "Failed to remove scene from interval scenes: {name}: {exception}".format(name=scene.name, exception=e))
 
     def event_scene_interval_tick(self, evt):
         now = evt.get('time', 0)
+        if now == 0:
+            raise RuntimeError("Invalid zero time for interval.")
         for x in self.intervalScenes:
             if x._nextTick <= now:
                 try:
@@ -127,16 +131,40 @@ class SceneManager(object):
                 except Exception as e:
                     logger.error(self, "Failed to execute {cls}.event_interval: {exception}".format(cls=x.__class__.__name__, exception=e))
                 x._nextTick = now + x._interval
-                
-    def execute(self, script, data=None):
-        if self.activeScene:
-            method = getattr(self.activeScene, script, None)
-            if method:
+    def onKeyDown(self, key, mod):
+        action = inputHandler.action(key, mod)
+        if action is None:
+            return False
+        return self.execute("input_press_%s" % action)
+    def onKeyUp(self, key, mod):
+        action = inputHandler.action(key, mod)
+        if action is None:
+            return False
+        return self.execute("input_release_%s" % action)
+    
+    def execute(self, script, data=None, target=None):
+        if target is None:
+            objList = [self, self.activeScene]
+        else:
+            objList = [target]
+        for obj in objList:
+            method = getattr(obj, script, None)
+            cls = obj.__class__
+            if method is not None:
                 try:
-                    method(data)
+                    logger.info(self, "Executing {name}.{script}".format(name=cls.__name__, script=script))
+                    if script.startswith('input'):
+                        method()
+                        return
+                    else:
+                        method(data)
                 except Exception as e:
-                    logger.error(self, "Failed to execute {name}.{script}: {exception}".format(name=self.activeScene.__class__.__name__, script=script, exception=e))
+                    logger.error(self, "Failed to execute {name}.{script}: {exception}".format(name=cls.__name__, script=script, exception=e))
+        return False
 
+    def input_press_control_shift_l(self):
+        self.load("sceneloader")
+        
 
 def initialize(gameConfig):
     global _instance
@@ -169,7 +197,7 @@ def initialize(gameConfig):
                     _instance.addScene(m.group(1), obj)
                     loadedScenes += 1
             except Exception as e:
-                logger.error(_instance, "Failed to instanciate scene {name}: {exception}".format(name=m.group(1), exception=ee))
+                logger.error(_instance, "Failed to instanciate scene {name}: {exception}".format(name=m.group(1), exception=e))
 
     # Load JSON-created scenes
     try:
@@ -202,19 +230,13 @@ def initialize(gameConfig):
 
 def onKeyDown(key, mods):
     global _instance
-    
-    activeScene = _instance.getActiveScene()
-    if activeScene is None:
-        return
-    activeScene.onKeyDown(key, mods)
+
+    _instance.onKeyDown(key, mods)
 
 def onKeyUp(key, mods):
     global _instance
 
-    activeScene = _instance.getActiveScene()
-    if activeScene is None:
-        return
-    activeScene.onKeyUp(key, mods)
+    _instance.onKeyUp(key, mods)
 
 def loadScene(name):
     global _instance
