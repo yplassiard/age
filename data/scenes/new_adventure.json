@@ -1,12 +1,64 @@
 {
-    "name": "new_adventure",
-    "interval": 30,
-    "type": "storytext",
-    "story": [
-        "Pitié...",
-        "Est-ce que quelqu'un m'entend ?",
-        "Dites-moi que ça a marché et que vous pouvez m'entendre!",
-        "Je..."
-    ],
-    "links": "mainmenu"
+    "scenes": [
+        {
+            "name": "new_adventure",
+            "interval": 30,
+            "type": "storytext",
+            "story": [
+                "Pitié...",
+                "Est-ce que quelqu'un m'entend ?",
+                "Dites-moi que ça a marché et que vous pouvez m'entendre!",
+                "Je..."
+            ],
+            "links": "it_works"
+        },
+        {
+            "name": "it_works",
+            "type": "menu",
+            "title": "Est-ce que vous m'entendez ?",
+            "choices": [
+                "Je... crois, oui.",
+                "Pas du tout."
+            ],
+            "links": {
+                "0": "a1_super",
+                "1": "a1_trymore"
+            }
+        },
+        {
+            "name": "a1_super",
+            "type": "storytext",
+            "interval": 30,
+            "story": [
+                "Ahh! Merci, merci!",
+                "Je ne pensais pas que ça marcherait vraiment",
+                "Qui que vous soyez, j'ai besoin de votre aide.",
+                "Je me nomme Pixel, et j'ai...",
+                "ARGHHHHHH...",
+                "Grrrrrr...",
+                "Hum... Hum...",
+                "...Besoin que vous...",
+                "rejoindre...",
+                "Vite... le temps presse!",
+                "...",
+                "Rien.",
+                "Quoi que ce fût, le message s'arrête ici.",
+                "Je vais voir aux alentours, si quelqu'un en sait davantage sur ce Pixel."
+            ],
+            "links": "mainmenu"
+        },
+        {
+            "name": "a1_trymore",
+            "type": "storytext",
+            "interval": 80,
+            "story": [
+                "Je dois encore essayer...",
+                "... avec davantage de volonté...",
+                "...",
+                "...",
+                "Est-ce que vous m'entendez maintenant ?"],
+            "links": "it_works"
+        }
+        
+    ]
 }

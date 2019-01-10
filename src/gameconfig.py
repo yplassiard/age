@@ -54,7 +54,8 @@ class GameConfig(object):
         except Exception as e:
             logger.error(self, "Failed to load {file}: {exception}".format(file=jsonFile, exception=e))
             return None
-        return jsonConfig
+        scenes = jsonConfig.get('scenes', [jsonConfig])
+        return scenes
 
     def getStartScene(self):
         return self.config.get('start-scene', 'main')

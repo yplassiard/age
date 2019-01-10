@@ -208,17 +208,18 @@ def initialize(gameConfig):
         for entry in dir:
             m = re.match("(^[^#]*.*)\.json$", entry.name)
             if m is not None:
-                jsonConfig = gameConfig.loadSceneConfiguration(entry.name)
-                totalScenes += 1
-                if jsonConfig is not None:
-                    try:
-                        obj = _instance.createScene(jsonConfig)
-                    except Exception as e:
-                        logger.error(_instance, "Failed to create scene {file}: {exception}".format(file=entry.name, exception=e))
-                        continue
-                    if obj is not None:
-                        _instance.addScene(obj.name, obj)
-                        loadedScenes += 1
+                jsonConfigList = gameConfig.loadSceneConfiguration(entry.name)
+                for jsonConfig in jsonConfigList:
+                    totalScenes += 1
+                    if jsonConfig is not None:
+                        try:
+                            obj = _instance.createScene(jsonConfig)
+                        except Exception as e:
+                            logger.error(_instance, "Failed to create scene {file}: {exception}".format(file=entry.name, exception=e))
+                            continue
+                        if obj is not None:
+                            _instance.addScene(obj.name, obj)
+                            loadedScenes += 1
                     
         
     if totalScenes > loadedScenes:
