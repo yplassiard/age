@@ -1,5 +1,6 @@
 # *-* coding: utf8 *-*
 import logger
+import platform
 
 
 class SpeechSupport(object):
@@ -21,14 +22,24 @@ _instance = None
 
 def initialize():
     global _instance
+    system = platform.system().lower()
+    if system == 'windows':
+        # try NVDA first
+        from . import nvda
+        sr = nvda.NVDASupport()
+        if sr.isActive():
+            _instance = sr
+            return True
+    elif system == 'darwin':
 
-    # try NVDA first
-    from . import nvda
-    sr = nvda.NVDASupport()
-    if sr.isActive():
-        _instance = sr
-        return True
 
+
+        from . import nsspeech
+        sr = nsspeech.NSSpeech()
+        if sr.isActive():
+            _instance = sr
+            return True
+        
     # If no speech is available, return False
     if _instance is None:
         logger.error("speech", "No speech systems can be initialized.")
