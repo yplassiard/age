@@ -10,13 +10,14 @@ import audio
 import inputHandler
 import eventManager
 import speech
-
+import player
 from scene import *
 
 # scene types map from string to real objects.
 _sceneTypesMap = {
     "menu": MenuScene,
-    "storytext": StoryTextScene
+    "storytext": StoryTextScene,
+    "mapregion": MapRegionScene
 }
 
 # Global scene manager instance
@@ -26,9 +27,19 @@ class SceneManager(object):
     scenes = {}
     intervalScenes = []
     activeScene = None
+    player = None
 
     def __init__(self, gameConfig):
         eventManager.addListener(self)
+        pc = gameconfig.getPlayerConfig()
+        if pc is None:
+            raise RuntimeError("No player defined")
+        pName = gameconfig.getValue(pc, "name", str)
+        
+        self.player = player.Player(pName, pc)
+        if self.player is None:
+            raise RuntimeError("Cannot create player")
+        
 
     def getLogName(self):
         return 'SceneManager'
@@ -43,6 +54,9 @@ class SceneManager(object):
             raise RuntimeError("Scene type {type} is not known.".format(type=type))
         if issubclass(cls, Scene) is False:
             raise RuntimeError("Scene type {type} is not a valid scene type ({realType})".format(type=type, realType=cls.__name__))
+        if type is None:
+            raise RuntimeError("A scene must have a \"type\" property. Vlid types: {types}".format(types=", ".join([key for key in _sceneTypesMap])))
+        
         try:
             obj = cls(name, config)
         except Exception as e:
@@ -55,7 +69,7 @@ class SceneManager(object):
             raise RuntimeError("Invalid argument")
         self.scenes[name] = obj
 
-    def load(self, sceneName, silentEntering=False, silentLeaving=False):
+    def load(self, sceneName, silentEntering=False, silentLeaving=False, params=None):
         s = self.scenes.get(sceneName, None)
         if s is None:
             logger.error(self, "Scene {name} not found".format(name=sceneName))
@@ -65,9 +79,9 @@ class SceneManager(object):
             self.activeScene.deactivate(silentLeaving)
             eventManager.post(eventManager.LEAVE_SCENE, {"scene": self.activeScene})
         self.activeScene = s
-        s.activate(silentEntering)
+        s.activate(silentEntering, params)
 
-    def leave(self, silentLeaving=False):
+    def leave(self, silentLeaving=False, params=None):
         if self.activeScene is not None:
             nextScene = self.activeScene.getNextScene()
             if nextScene is None:
@@ -75,12 +89,15 @@ class SceneManager(object):
             if nextScene == '__quit':
                 eventManager.post(eventManager.QUIT_GAME)
             else:
-                if self.load(nextScene) is False:
+                if self.load(nextScene, params) is False:
                     speech.speak("scene {name} not created yet.".format(name=nextScene))
                     
     def getActiveScene(self):
         return self.activeScene
 
+    def getPlayer(self):
+        return self.player
+    
 
     # events
 
@@ -99,7 +116,7 @@ class SceneManager(object):
         self.execute('event_pause_game', evt, target=self.activeScene)
 
     def event_leave_current_scene(self, event):
-        self.leave()
+        self.leave(event["params"])
 
     def event_scene_interval_activate(self, event):
         scene = event.get('scene', None)
@@ -173,7 +190,7 @@ def initialize(gameConfig):
         try:
             _instance = SceneManager(gameConfig)
         except Exception as e:
-            logger.error("sceneManager", "Failed to initialize scene manager: {exception}".format(exception=e))
+            logger.exception("sceneManager", "Failed to initialize scene manager", e)
             return False
 
     # Load all scenes fresent within the scene directory
@@ -244,7 +261,12 @@ def loadScene(name):
 
     return _instance.load(name)
 
-def leaveCurrentScene():
+def leaveCurrentScene(params=None):
     global _instance
 
-    _instance.leave()
+    _instance.leave(params)
+
+def getPlayer():
+    global _instance
+
+    return _instance.getPlayer()

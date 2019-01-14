@@ -2,6 +2,8 @@
 
 import io
 import pygame
+import sys
+import traceback
 
 import eventManager
 
@@ -41,6 +43,9 @@ class Logger(object):
 
     def getLogName(self):
         return 'logger'
+
+    def getLogIO(self):
+        return self.logIO
     
     def event_quit_game(self, data):
         self.log('Info', self, "Loggging system terminated")
@@ -56,6 +61,8 @@ def initialize():
     _instance = Logger()
 
 def info(system, message):
+    global _instance
+    
     if _instance is not None:
         _instance.log("Info", system, message)
     else:
@@ -63,13 +70,29 @@ def info(system, message):
 
 
 def warning(system, message):
+    global _instance
+    
     if _instance is not None:
         _instance.log("Warning", system, message)
     else:
         print("Log not initialized: {system}: {message}".format(system=system, message=message))
 def error(system, message):
+    global _instance
+    
     if _instance is not None:
         _instance.log("Error", system, message)
+    else:
+        print("Log not initialized: {system}: {message}".format(system=system, message=message))
+
+
+
+def exception(system, message, exception):
+    global _instance
+    
+    if _instance is not None:
+        _instance.log("Exception", system, "{message}: {exception}".format(message=message, exception=exception))
+        traceback.print_tb(exception.__traceback__)
+        
     else:
         print("Log not initialized: {system}: {message}".format(system=system, message=message))
 

@@ -5,7 +5,7 @@ import json
 import logger
 import constants
 
-config = None
+_instance = None
 
 class GameConfig(object):
     """Loads the engine configuration file and provides methods to get/set config values."""
@@ -16,8 +16,9 @@ class GameConfig(object):
             data = fileObject.readall()
             fileObject.close()
             self.config = json.loads(data)
-            global config
-            config = self
+            global _instance
+            
+            _instance = self
             sys.path.append(self.getLibraryPath())
         except Exception as e:
             logger.error(self, "failed to load file: %s" %(e))
@@ -59,6 +60,10 @@ class GameConfig(object):
 
     def getStartScene(self):
         return self.config.get('start-scene', 'main')
+
+    def getPlayerConfig(self):
+        return self.config.get('player', None)
+    
     def getControlResources(self):
         try:
             return self.config["resources"]["controls"]
@@ -80,9 +85,48 @@ class GameConfig(object):
 
 def getLibraryPath():
     """Returns the path to 3rd party libraries (DLL, DyLib, SO)."""
-    global config
+    global _instance
 
-    if config is not None:
-        return config.getLibraryPath()
+    if _instance is not None:
+        return _instance.getLibraryPath()
     else:
         raise RuntimeError("getLibraryPath(): Configuration not loaded.")
+
+def getPlayerConfig():
+    """Returns the player configuration."""
+    global _instance
+
+    return _instance.getPlayerConfig()
+
+def getValue(config, key, cls, attrs=None):
+    global _instance
+    
+    className = cls.__name__
+    ret = config.get(key, None)
+    if ret is None:
+        logger.warning(_instance, "Property {key} missing".format(key=key))
+        return ret
+    if isinstance(ret, cls) is False:
+        raise RuntimeError("Configuration error: {key} has to be {clsName}".format(key=key, clsName=className))
+    if attrs is None:
+        return ret
+    minValue = attrs.get("minValue", None)
+    maxValue = attrs.get("maxValue", None)
+    if minValue is not None and minValue > ret:
+        raise RuntimeError("Configuration error: The minimum allowed value for {key} is {min}".format(key=key, min=minValue))
+    if maxValue is not None and maxValue < ret:
+        raise RuntimeError("Configuration error: The maximum allowed value for {key} is {max}".format(key=key, max=maxValue))
+
+    # list checks
+    listCount = attrs.get("elements", None)
+    if listCount is not None and isinstance(ret, list) and len(ret) < listCount:
+        raise RuntimeError("Configuration error: The {key} list has to contain at least {count} elements".format(key=key, count=listCount))
+
+    # sound and music property checks
+    if key.endswith("sound"):
+        volume = config.get("%s-volume" % key, constants.AUDIO_DEFAULT_SOUND_VOLUME)
+        return (ret, volume)
+    if key.endswith("music"):
+        volume = config.get("%s-volume" % key, constants.AUDIO_DEFAULT_MUSIC_VOLUME)
+        return (ret, volume)
+    return ret

@@ -16,3 +16,16 @@ AUDIO_MESSAGE_FINISH_SOUND = "messageFinished"
 # Scene constants
 
 SCENE_MININUM_INTERVAL = 10 # milliseconds
+# directions the player can go to
+
+DIRECTION_NORTH = 0
+DIRECTION_SOUTH = 1
+DIRECTION_EAST = 2
+DIRECTION_WEST = 3
+
+
+# Objects specific constants
+
+# Leckables
+LOCKSTATE_LOCKED = 100
+LOCKSTATE_UNLOCKED = 101

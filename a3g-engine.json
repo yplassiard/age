@@ -21,6 +21,12 @@
     "scenes": {
         "mainmenu": "mainmenu.json"
     },
+    "player": {
+        "name": "Link",
+        "health": 3,
+        "magic": 0,
+        "stamina": 10
+    },
     "start-scene": "mainmenu"
 }
              

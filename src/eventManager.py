@@ -17,6 +17,9 @@ LEAVE_CURRENT_SCENE = 12
 SCENE_INTERVAL_ACTIVATE = 13
 SCENE_INTERVAL_DEACTIVATE = 14
 SCENE_INTERVAL_TICK = 15
+# hero specific events
+HERO_WALK = 50
+HERO_RUN = 60
 
 
 
@@ -32,7 +35,9 @@ eventNames = {
     SCENE_INTERVAL_DEACTIVATE: "scene_interval_deactivate",
     SCENE_INTERVAL_TICK: "scene_interval_tick",
     QUIT_GAME: "quit_game",
-    PAUSE_GAME: "pause_game"
+    PAUSE_GAME: "pause_game",
+    HERO_WALK: "hero_walk",
+    HERO_RUN: "hero_run"
 }
 
 def addListener(obj):
@@ -43,14 +48,14 @@ is found within obj's implementation."""
     if obj is not None:
         eventListeners.append(obj)
 
-def post(type, data=None):
+def post(type, data=None, target=None):
     """Posts an event to all listeners. the type argument must be one of the defined eventManager
 constants above. The data argument is a dict which may contain any useful data for listeners.
 """
     if isinstance(type, int) is False:
         raise RuntimeError("Event type parameter has to be integer.")
     
-    pygame.event.post(pygame.event.Event(pygame.USEREVENT, {"type": type, "data": data}))
+    pygame.event.post(pygame.event.Event(pygame.USEREVENT, {"type": type, "data": data, "target": target}))
 
 
 def dispatch(event):
@@ -59,7 +64,13 @@ def dispatch(event):
     global eventListeners
 
     script = "event_%s" % eventNames.get(event.dict.get("type", 'unknown'), None)
-    for listener in eventListeners:
+    target = event.dict.get("target", None)
+    targets = []
+    if target is not None:
+        target.append(target)
+    else:
+        targets.extend(eventListeners)
+    for listener in targets:
         method = getattr(listener, script, None)
         if method:
             try:

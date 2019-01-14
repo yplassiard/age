@@ -1,0 +1,45 @@
+{
+    "scenes": [
+        {"name": "forest_c3",
+         "type": "mapregion",
+         "height:": 30,
+         "width": 30,
+         "region-links": [
+             {"name": "north",
+              "link": "forest_c2.south",
+              "position": [12, 29, 18, 29],
+              "spawn-height": "0"
+             },
+             {"name": "south",
+              "link": "forest_c4.north",
+              "position": [12, 0, 18, 0],
+              "spawn-height": 29
+             }
+         ]
+        },
+        {"name": "forest_c2",
+         "type": "mapregion",
+         "height": 30,
+         "width": 30,
+         "region-links": [
+             {"name": "south",
+              "link": "forest_c3.north",
+              "position": [12, 0, 18, 0],
+              "spawn-height": 29
+             }
+         ]
+        },
+        {"name": "forest_c4",
+         "type": "mapregion",
+         "height": 30,
+         "width": 30,
+         "region-links": [
+             {"name": "north",
+              "link": "forest_c3.south",
+              "position": [29, 12, 29, 18],
+              "spawn-height": 0
+             }
+         ]
+        }
+    ]
+}

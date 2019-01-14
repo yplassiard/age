@@ -9,7 +9,7 @@ class Scene(scene.MenuScene):
 
 
         
-    def activate(self, silent):
+    def activate(self, silent, params=None):
         idx = 0
         for name in sceneManager._instance.scenes:
             self.links[str(idx)] = name
