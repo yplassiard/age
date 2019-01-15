@@ -47,30 +47,35 @@ def main():
     background.blit(text, textpos)
     screen.blit(background, (0, 0))
     pygame.display.flip()
-    intervalTicks = pygame.time.get_ticks()
+    oldTime = 0
+    clock = pygame.time.Clock()
+    
+    exposed = False
     while 1:
         event = pygame.event.poll()
-        if event.type == pygame.VIDEOEXPOSE:
+        if event.type == pygame.VIDEOEXPOSE and exposed is False:
             if sceneManager.loadScene(gc.getStartScene()) is False:
                 print("Failed to load first scene {name}".format(name=gc.getStartScene()))
                 return
+            else:
+                exposed = True
         elif event.type == QUIT:
             return
         elif event.type == pygame.KEYDOWN:
             sceneManager.onKeyDown(event.key, event.mod)
         elif event.type == pygame.KEYUP:
             sceneManager.onKeyUp(event.key, event.mod)
-        # screen.blit(background, (0, 0))
-        # pygame.display.flip()
         # check our own events
 
         eventManager.pump()
         
-        now = pygame.time.get_ticks()
-        if now - intervalTicks > constants.INTERVAL_TICK_RESOLUTION:
-            eventManager.post(eventManager.SCENE_INTERVAL_TICK, {"time": now})
-            intervalTicks = now
+        now = clock.tick(60)
+        # logger.info('main', "Tick is {time}".format(time=now))
+        if now > constants.INTERVAL_TICK_RESOLUTION:
+            eventManager.post(eventManager.SCENE_INTERVAL_TICK, {"time": pygame.time.get_ticks()})
+            oldTime = now
     logger.log("main", "Exiting game.")
+    pygame.quit()
     
 if __name__ == '__main__':
     main()

@@ -12,13 +12,12 @@ import os
 
 class Effect(object):
     """Basic audio effect that does nothing."""
-    _lastTick = 0
-    delay = 1000 # milliseconds
+    stepValue = 0.01
     sound = None
     channel = None
     name = None
 
-    def __init__(self, sound, delay):
+    def __init__(self, sound, stepValue):
         super().__init__()
         self.sound = sound
         self.name = self.sound["name"]
@@ -39,16 +38,17 @@ class VolumeEffect(Effect):
     """Implements a fade volume effect, either fade in or fade out."""
     expected = None
 
-    def __init__(self, sound, expected, delay=1000):
-        super().__init__(sound, delay)
+    def __init__(self, sound, expected, stepValue=0.01):
+        super().__init__(sound, stepValue)
         self.expected = expected
         self.curVolume = self.channel.get_volume()
-        if self.curVolume > self.expected:
-            self.stepValue = -((self.curVolume - self.expected) / (self.delay / constants.INTERVAL_TICK_RESOLUTION))
-        else:
-            self.stepValue = (self.expected - self.curVolume) / (self.delay * constants.INTERVAL_TICK_RESOLUTION)
+        self.stepValue = stepValue
     def isCompleted(self):
-        return True if self.channel.get_volume() == self.expected else False
+        if abs(self.channel.get_volume() - self.expected) < 0.01:
+            self.channel.set_volume(self.expected)
+            return True
+        return False
+    
     def __str__(self):
         return "VolumeEffect(%s)" % self.name
 
@@ -154,16 +154,15 @@ class AudioManager(object):
     def event_scene_interval_tick(self, event):
         now = event.get("time", 0)
         for effect in self.timeEffects:
-            if effect._lastTick + effect.delay < now:
-                if isinstance(effect, VolumeEffect):
-                    logger.info(self, "Adjusting {name}(volume={volume}, step={step})".format(name=effect.name, volume=effect.curVolume, step=effect.stepValue))
-                    effect.curVolume += effect.stepValue
-                    effect.channel.set_volume(effect.curVolume)
-                    if effect.isCompleted():
-                        logger.info(self, "Effect {e} completed".format(e=effect))
-                        self.timeEffects.remove(effect)
-                        continue
-                    effect._lastTick = now
+            if isinstance(effect, VolumeEffect):
+                logger.info(self, "Adjusting {name}(volume={volume}, step={step})".format(name=effect.name, volume=effect.curVolume, step=effect.stepValue))
+                effect.curVolume += effect.stepValue
+                effect.channel.set_volume(effect.curVolume)
+                if effect.isCompleted():
+                    logger.info(self, "Effect {e} completed".format(e=effect))
+                    self.timeEffects.remove(effect)
+                    continue
+                effect._lastTick = now
     
                     
         
