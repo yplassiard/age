@@ -1,6 +1,7 @@
 # *-* coding: utf-8 *-*
 
 import pygame
+import constants
 from pygame.locals import *
 
 import gameconfig
@@ -22,12 +23,13 @@ def main():
         return False
     speech.cancelSpeech()
     speech.speak("Welcome to A3 Game Engine!")
+
+    if audio.initialize(gc) is False:
+        logger.error("main", "Failed to initialize sound support.")
+        return
     if sceneManager.initialize(gc) is False:
         logger.error("main", "Unable to initialize scenes.")
         print("Unable to initialize scenes: Check the logfile for more details.")
-        return
-    if audio.initialize(gc) is False:
-        logger.error("main", "Failed to initialize sound support.")
         return
     
     pygame.init()
@@ -45,27 +47,27 @@ def main():
     background.blit(text, textpos)
     screen.blit(background, (0, 0))
     pygame.display.flip()
-    ticks = pygame.time.get_ticks()
-    intervalTicks = ticks
+    intervalTicks = pygame.time.get_ticks()
     while 1:
-        for event in pygame.event.get():
-            if event.type == pygame.VIDEOEXPOSE:
-                if sceneManager.loadScene(gc.getStartScene()) is False:
-                    print("Failed to load first scene {name}".format(name=gc.getStartScene()))
-                    return
-            elif event.type == QUIT:
+        event = pygame.event.poll()
+        if event.type == pygame.VIDEOEXPOSE:
+            if sceneManager.loadScene(gc.getStartScene()) is False:
+                print("Failed to load first scene {name}".format(name=gc.getStartScene()))
                 return
-            elif event.type == pygame.USEREVENT:
-                eventManager.dispatch(event)
-            elif event.type == pygame.KEYDOWN:
-                sceneManager.onKeyDown(event.key, event.mod)
-            elif event.type == pygame.KEYUP:
-                sceneManager.onKeyUp(event.key, event.mod)
-            # screen.blit(background, (0, 0))
-            # pygame.display.flip()
+        elif event.type == QUIT:
+            return
+        elif event.type == pygame.KEYDOWN:
+            sceneManager.onKeyDown(event.key, event.mod)
+        elif event.type == pygame.KEYUP:
+            sceneManager.onKeyUp(event.key, event.mod)
+        # screen.blit(background, (0, 0))
+        # pygame.display.flip()
+        # check our own events
 
+        eventManager.pump()
+        
         now = pygame.time.get_ticks()
-        if now - intervalTicks > 5:
+        if now - intervalTicks > constants.INTERVAL_TICK_RESOLUTION:
             eventManager.post(eventManager.SCENE_INTERVAL_TICK, {"time": now})
             intervalTicks = now
     logger.log("main", "Exiting game.")

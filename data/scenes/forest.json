@@ -4,6 +4,12 @@
          "type": "mapregion",
          "height": 30,
          "width": 30,
+         "musics": [
+             {"name": "ambiant-forest",
+              "file": "forest-ambiance.ogg",
+              "loop": -1
+             }
+         ],
          "region-links": [
              {"name": "north",
               "link": "forest_c2.south",

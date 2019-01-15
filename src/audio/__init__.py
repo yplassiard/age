@@ -2,6 +2,7 @@
 
 import logger
 import constants
+import gameconfig
 import eventManager
 import pygame
 import os
@@ -9,7 +10,49 @@ import os
 
 # Audio subsystem
 
+class Effect(object):
+    """Basic audio effect that does nothing."""
+    _lastTick = 0
+    delay = 1000 # milliseconds
+    sound = None
+    channel = None
+    name = None
 
+    def __init__(self, sound, delay):
+        super().__init__()
+        self.sound = sound
+        self.name = self.sound["name"]
+        self.channel = self.sound["channel"]
+        if self.channel is None:
+            raise RuntimeError("Sound {name} does not have any active channel".format(name=name))
+    
+    def __str__(self):
+        return "Effect({name})".format(name=self.name)
+
+    def isCompleted(self):
+        raise NotImplementedError
+
+    def getLogName(self):
+        return "Effect()"
+    
+class VolumeEffect(Effect):
+    """Implements a fade volume effect, either fade in or fade out."""
+    expected = None
+
+    def __init__(self, sound, expected, delay=1000):
+        super().__init__(sound, delay)
+        self.expected = expected
+        self.curVolume = self.channel.get_volume()
+        if self.curVolume > self.expected:
+            self.stepValue = -((self.curVolume - self.expected) / (self.delay / constants.INTERVAL_TICK_RESOLUTION))
+        else:
+            self.stepValue = (self.expected - self.curVolume) / (self.delay * constants.INTERVAL_TICK_RESOLUTION)
+    def isCompleted(self):
+        return True if self.channel.get_volume() == self.expected else False
+    def __str__(self):
+        return "VolumeEffect(%s)" % self.name
+
+    
 
 
 _instance = None
@@ -20,6 +63,7 @@ class AudioManager(object):
     """Manages all audio resources (sfx, bgm)"""
     soundMap = {}
     musicMap = {}
+    timeEffects = []
     
 
     def __init__(self, gameConfig):
@@ -41,7 +85,30 @@ class AudioManager(object):
 
         _instance = self
 
-    def play(self, name, volume, pan=(1.0, 1.0)):
+    def loadMusic(self, config):
+        name = gameconfig.getValue(config, "name", str)
+        file = gameconfig.getValue(config, "file", str)
+        loop = gameconfig.getValue(config, "loop", int)
+        if loop is None:
+            loop = -1
+        if name is None or file is None:
+            raise RuntimeError("Missing name or file property for music")
+        if self.musicMap.get(name, None) is not None:
+            raise RuntimeError("Music's name {name} already defined".format(name=name))
+        try:
+            logger.info(self, "Loading music {name} ({file})".format(name=name, file=file))
+            snd = pygame.mixer.Sound(os.path.join("data", "musics", file))
+        except Exception as e:
+            logger.error(self, "Cannot load music {name} ({file}): {exception}".format(name=name, file=file, exception=e))
+            return False
+        self.musicMap[name] = {"music": snd,
+                               "name": name,
+                               "scene": config.get('scene', None),
+                               "channel": None,
+                               "loop": loop}
+        return True
+    
+    def play(self, name, volume, pan=(1.0, 1.0), fadeIn=False):
         sndInfo = self.soundMap.get(name, None)
         left = volume * pan[0]
         right = volume * pan[1]
@@ -50,20 +117,56 @@ class AudioManager(object):
                 sndInfo["channel"].play(sndInfo["sound"])
             else:
                 sndInfo["channel"] = sndInfo["sound"].play()
-            sndInfo["channel"].set_volume(left, right)
+            if fadeIn is False:
+                sndInfo["channel"].set_volume(left, right)
+            else:
+                sndInfo["channel"].set_volume(0, 0)
+                self.timeEffects.append(VolumeEffect(sndInfo, volume))
             sndInfo["playing"] = True
             # logger.debug(self, "Playing {name}({volume}, {left}, {right})".format(name=name, volume=volume, left=left, right=right))
         else:
             logger.error(self, "Sound {name} is not loaded.".format(name=name))
+
     def stop(self, name):
         sndInfo = self.soundMap.get(name, None)
         if sndInfo is not None and sndInfo["playing"] is True:
             sndInfo["sound"].stop()
             sndInfo["playing"] = False
+
+    def playMusic(self, name, volume=constants.AUDIO_MUSIC_VOLUME, fadeIn=True):
+        musicInfo = self.musicMap.get(name, None)
+        if musicInfo is None:
+            logger.error(self, "Music {name} not loaded".format(name=name))
+            return False
+        musicInfo["channel"] = musicInfo["music"].play()
+        if fadeIn is False:
+            musicInfo["channel"].set_volume(volume)
+        else:
+            musicInfo["channel"].set_volume(0)
+            self.timeEffects.append(VolumeEffect(musicInfo, volume))
             
     def getLogName(self):
         return "AudioManager"
+
+
+    # events
+
+    def event_scene_interval_tick(self, event):
+        now = event.get("time", 0)
+        for effect in self.timeEffects:
+            if effect._lastTick + effect.delay < now:
+                if isinstance(effect, VolumeEffect):
+                    logger.info(self, "Adjusting {name}(volume={volume}, step={step})".format(name=effect.name, volume=effect.curVolume, step=effect.stepValue))
+                    effect.curVolume += effect.stepValue
+                    effect.channel.set_volume(effect.curVolume)
+                    if effect.isCompleted():
+                        logger.info(self, "Effect {e} completed".format(e=effect))
+                        self.timeEffects.remove(effect)
+                        continue
+                    effect._lastTick = now
     
+                    
+        
 def initialize(gameConfig):
     if _instance is None:
         try:
@@ -77,8 +180,16 @@ def play(name, volume=constants.AUDIO_FX_VOLUME, pan=(1.0, 1.0)):
     global _instance
 
     _instance.play(name, volume, pan)
+def playMusic(name, volume=constants.AUDIO_MUSIC_VOLUME, fadeIn=True):
+    global _instance
+
+    _instance.playMusic(name, volume)
 
 
+def loadMusic(config):
+    global _instance
+
+    return _instance.loadMusic(config)
 
 def computePan(minValue, maxValue, currentValue):
     step = maxValue - minValue

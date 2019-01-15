@@ -60,7 +60,7 @@ class SceneManager(object):
         try:
             obj = cls(name, config)
         except Exception as e:
-            logger.error(self, "Error instanciating scene {name}: {exception}.".format(name=name, exception=e))
+            logger.exception(self, "Error instanciating scene {name}: {exception}".format(name=name, exception=e), e)
             return None
         return obj
     

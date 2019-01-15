@@ -35,7 +35,7 @@ class Logger(object):
             systemName = system.getLogName()
         try:
             self.logIO.write(bytes("{ticks} {system} {category}: {message}\r\n".format(ticks=pygame.time.get_ticks() - self.ticks, system=systemName, category=category, message=message), 'utf-8'))
-            self.logIO.flush()
+            # self.logIO.flush()
         except Exception as e:
             print("Log failed: {system} {category}: {message}. Caused by {exception}".format(system=systemName, category=category, message=message, exception=e))
             return False

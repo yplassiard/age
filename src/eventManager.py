@@ -1,5 +1,6 @@
 # *-* coding utf8 *-*
 
+import queue
 import pygame
 
 import logger
@@ -26,8 +27,18 @@ HERO_RUN = 52
 
 # List objects receiving custom game events.
 eventListeners = []
+eventQueue = queue.Queue()
 
-# Maps event constants to strings to ease event handler executions.
+def pump():
+    global eventQueue
+    
+    try:
+        e = eventQueue.get(block=False)
+    except queue.Empty:
+        return
+    dispatch(e)
+
+        # Maps event constants to strings to ease event handler executions.
 eventNames = {
     LOAD_SCENE: "load_scene",
     LEAVE_SCENE: "leave_scene",
@@ -57,8 +68,9 @@ constants above. The data argument is a dict which may contain any useful data f
 """
     if isinstance(type, int) is False:
         raise RuntimeError("Event type parameter has to be integer.")
+    global eventQueue
     
-    pygame.event.post(pygame.event.Event(pygame.USEREVENT, {"type": type, "data": data, "target": target}))
+    eventQueue.put({"type": type, "data": data, "target": target})
 
 
 def dispatch(event):
@@ -66,8 +78,8 @@ def dispatch(event):
     global eventNames
     global eventListeners
 
-    script = "event_%s" % eventNames.get(event.dict.get("type", 'unknown'), None)
-    target = event.dict.get("target", None)
+    script = "event_%s" % eventNames.get(event.get("type", 'unknown'), None)
+    target = event.get("target", None)
     targets = []
     if target is not None:
         target.append(target)
@@ -77,7 +89,7 @@ def dispatch(event):
         method = getattr(listener, script, None)
         if method:
             try:
-                method(event.data)
+                method(event.get('data', None))
             except Exception as e:
                 logger.error("eventManager", "Failed to execute {name}.{script}({event}): {exception}".format(name=listener.__class__.__name__, script=script, event=event, exception=e))
                 continue

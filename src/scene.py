@@ -16,6 +16,7 @@ class Scene(object):
     focused = False
     activateSound = None
     deactivateSound = None
+    musics = []
 
     def __init__(self, name, config):
         if name is None:
@@ -26,6 +27,14 @@ class Scene(object):
             self.activateSound = config.get("enterSound", None)
             self.deactivateSound = config.get("leaveSound", None)
             self.links = config.get("links", {})
+            self.musics = gameconfig.getValue(config, "musics", list)
+            if self.musics is None:
+                self.musics = []
+            for music in self.musics:
+                music["scene"] = self
+                if audio.loadMusic(music) is False:
+                    logger.warning(self, "Music {name} not loaded".format(name=music.get("name", "unknown")))
+                                   
 
     def getNextScene(self):
         raise NotImplementedError("This scene is terminal.")
@@ -36,6 +45,10 @@ class Scene(object):
         logger.info(self, "Scene {name} activated.".format(name=self.name))
         if silent is False and self.activateSound is not None:
             audio.play(self.activateSound)
+        for music in self.musics:
+            audio.playMusic(music["name"], fadeIn=True)
+
+            
 
     def deactivate(self, silent=False):
         if self.focused is False:

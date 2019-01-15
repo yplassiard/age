@@ -5,9 +5,11 @@
 # global configuration
 CONFIG_RESOURCE_DIR = "res"
 CONFIG_DATA_DIR = "data"
+INTERVAL_TICK_RESOLUTION = 1
 
 # Audio constants
 AUDIO_FX_VOLUME = 0.8
+AUDIO_MUSIC_VOLUME = 0.8
 AUDIO_ERROR_SOUND = "error-sound"
 AUDIO_MESSAGE_SOUND = "message"
 AUDIO_MESSAGE_FINISH_SOUND = "messageFinished"
