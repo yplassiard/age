@@ -7,7 +7,7 @@ import eventManager
 from objects import Object
 
 class Player(Object):
-    haalth = None
+    health = None
     stamina = None
     magic = None
 
@@ -34,9 +34,23 @@ class Player(Object):
                 
                                             
 
+    def getLogName(self):
+        return "Player(%s)" % self.name
+    
     # events
 
     def event_hero_walk(self, evt):
-        pass
+        logger.info(self, "Walking ({posX}, {posY})".format(posX=evt["position"][0], posY=evt["position"][1]))
+        
     def event_hero_run(self, evt):
         pass
+
+    def event_hero_spawn(self, evt):
+        s = evt.get("scene", None)
+        if s is not None:
+            scene = s.name
+        else:
+            scene = 'Unknown'
+        logger.info(self, "Spawned in {scene}, at position {pos}".format(scene=scene, pos=evt.get("position", 'Unknown')))
+        
+                    

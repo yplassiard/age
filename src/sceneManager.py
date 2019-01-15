@@ -89,7 +89,7 @@ class SceneManager(object):
             if nextScene == '__quit':
                 eventManager.post(eventManager.QUIT_GAME)
             else:
-                if self.load(nextScene, params) is False:
+                if self.load(nextScene, params=params) is False:
                     speech.speak("scene {name} not created yet.".format(name=nextScene))
                     
     def getActiveScene(self):
@@ -116,7 +116,7 @@ class SceneManager(object):
         self.execute('event_pause_game', evt, target=self.activeScene)
 
     def event_leave_current_scene(self, event):
-        self.leave(event["params"])
+        self.leave(params=event["params"])
 
     def event_scene_interval_activate(self, event):
         scene = event.get('scene', None)
@@ -177,6 +177,7 @@ class SceneManager(object):
                         method(data)
                 except Exception as e:
                     logger.error(self, "Failed to execute {name}.{script}: {exception}".format(name=cls.__name__, script=script, exception=e))
+                    logger.exception(self, "{name}.{script}".format(name=cls.__name__, script=script), e)
         return False
 
     def input_press_control_shift_l(self):

@@ -18,8 +18,9 @@ SCENE_INTERVAL_ACTIVATE = 13
 SCENE_INTERVAL_DEACTIVATE = 14
 SCENE_INTERVAL_TICK = 15
 # hero specific events
-HERO_WALK = 50
-HERO_RUN = 60
+HERO_SPAWN = 50
+HERO_WALK = 51
+HERO_RUN = 52
 
 
 
@@ -36,6 +37,8 @@ eventNames = {
     SCENE_INTERVAL_TICK: "scene_interval_tick",
     QUIT_GAME: "quit_game",
     PAUSE_GAME: "pause_game",
+
+    HERO_SPAWN: "hero_spawn",
     HERO_WALK: "hero_walk",
     HERO_RUN: "hero_run"
 }

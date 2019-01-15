@@ -2,7 +2,7 @@
     "scenes": [
         {"name": "forest_c3",
          "type": "mapregion",
-         "height:": 30,
+         "height": 30,
          "width": 30,
          "region-links": [
              {"name": "north",

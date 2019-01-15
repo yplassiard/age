@@ -97,7 +97,7 @@ Note: This is event is not called when the scene is not active.
             if self._interval is None or isinstance(self._interval, int) is False or self._interval < constants.SCENE_MININUM_INTERVAL:
                 raise RuntimeError("Invalid interval value {value}".format(self._interval))
     def activate(self, silent=False, params=None):
-        super().activate(silent)
+        super().activate(silent, params)
         eventManager.post(eventManager.SCENE_INTERVAL_ACTIVATE, {"scene": self})
     def deactivate(self, silent=False):
         eventManager.post(eventManager.SCENE_INTERVAL_DEACTIVATE, {"scene": self})
@@ -294,25 +294,33 @@ A region is represented as a rectangle.
     height = 0
     width = 0
     regionLinks = None
+    heroPosition = None
 
     def __init__(self, name, config):
         super().__init__(name, config)
         import sceneManager
         self.hero = sceneManager.getPlayer()
-        self.height = gameconfig.getValue(config, "hhight", int)
-        self.width = gameconfig.getValue(config, "width", int)
+        self.height = gameconfig.getValue(config, "height", int, {"minValue": 1})
+        self.width = gameconfig.getValue(config, "width", int, {"minValue": 1})
         self.regionLinks = gameconfig.getValue(config, "region-links", list, {"elements": 1})
+        self.objects = gameconfig.getValue(config, "objects", list, notNone=False)
+        if self.objects is None:
+            self.objects = []
+        
 
 
-    def activate(silent=False, params=None):
+    def getLogName(self):
+        return "MapRegionScene(%s)" % self.name
+
+    def activate(self, silent=False, params=None):
         super().activate(silent, params)
         self.heroPosition = None
-        if params != None:
-            enter = param.get('enter', None)
+        if params is not None:
+            enter = params.get('enter', None)
             if enter is not None:
                 for region in self.regionLinks:
                     if region.get("name", None) == enter:
-                        pos = gameconfig.get(region, "position", list, {"elements": 4})
+                        pos = gameconfig.getValue(region, "position", list, {"elements": 4})
                         if pos[0] == pos[2]:
                             self.heroPosition = [pos[0], pos[1] + int((pos[3] - pos[1]) / 2)]
                         elif pos[1] == pos[3]:
@@ -320,15 +328,16 @@ A region is represented as a rectangle.
                         else:
                             self.heroPosition = [int(self.width / 2), int(self.height / 2)]
                 if self.heroPosition is None:
-                    logger.error(self, "{name}: Entering scene with unknown position".format(name=name))
+                    logger.error(self, "Entering scene with unknown position")
                     self.heroPosition = [int(self.width / 2), int(self.height / 2)]
             else:
+                logger.info(self, "No enter specified, spawning in the middle.")
                 self.heroPosition = [int(self.width / 2), int(self.height / 2)]
-            
-                                 
-                            
-                            
-            eventManager.post(eventManager.HERO_SPAWN, {"scene": self, "position": self.heroPosition})
+        else:
+            logger.info(self, "No params specified, spawning in the middle.")
+            self.heroPosition = [int(self.width / 2), int(self.height / 2)]
+        eventManager.post(eventManager.HERO_SPAWN, {"scene": self, "position": self.heroPosition})
+
     def input_press_up(self):
         self.onWalk(constants.DIRECTION_NORTH)
 
@@ -355,36 +364,41 @@ A region is represented as a rectangle.
         elif direction == constants.DIRECTION_WEST:
             newPos[0] -= 1
 
-        # Test if we're on an exit
-
-        for link in self.regionLinks:
-            rect = link.get("position", [])
-            if len(rect) != 4:
-                logger.error(self, "Exit {name} is invalid: no valid position".format(name=link.get("name", None)))
-                audio.play(constants.AUDIO_ERROR_SOUND)
-            
         # now, let's see what's on this new position
+
         for obj in self.objects:
             if obj.comparePosition(newPos) is True:
                 self.onInteract(self.hero, obj, direction)
                 return
         # Second, let's see if there is a link to another region
-        hPos = self.hero.getPosisjon()
+        
         for region in self.regionLinks:
-            pos = gameconfig.get(region, "position", list, {"elements": 4})
-            if (hPos[0] == pos[0] and hPos[1] >= pos[1] and hPos[1] <= pos[3]) \
-               or (hPos[1] == pos[1] and hPos[0] >= pos[0] and hPos[0] <= pos[2]):
+            pos = gameconfig.getValue(region, "position", list, {"elements": 4})
+            if (newPos[0] == pos[0] and newPos[1] >= pos[1] and newPos[1] <= pos[3]) \
+               or (newPos[1] == pos[1] and newPos[0] >= pos[0] and newPos[0] <= pos[2]):
                 scene,enter = region.get("link", "").split(".")
                 self.nextScene = scene
-                leaveCurrentScene(enter)
-        
+                leaveCurrentScene(params={"enter": enter})
+                return
                 
         # If we reach this, nothing prevents us to walk this way
 
         self.heroPosition = newPos
-        audio.play(self.getGroundTypeSound(), self.footStepVolume, audio.computePan(0, self.width, newPos[0]))
-        eventManager.post(eventManager.HERO_WALK, self.hero)
+        footStepSound = self.getGroundTypeSound()
+        audio.play(footStepSound[0], footStepSound[1], audio.computePan(0, self.width, newPos[0]))
+        eventManager.post(eventManager.HERO_WALK, {"position": self.heroPosition, "scene": self})
+
+    def getGroundTypeSound(self):
+        ret = gameconfig.getValue(self.config, "footssep-walk-sound", str)
+        if ret is None:
+            ret = [constants.AUDIO_FOOTSTEP_WALK_SOUND, constants.AUDIO_FX_VOLUME]
+        return ret
+    
+            
         
+    def getNextScene(self):
+        return self.nextScene
+    
                    
             
         
@@ -397,3 +411,4 @@ A region is represented as a rectangle.
 
 def leaveCurrentScene(params=None):
     eventManager.post(eventManager.LEAVE_CURRENT_SCENE, {"params": params})
+

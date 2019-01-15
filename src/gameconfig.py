@@ -98,7 +98,7 @@ def getPlayerConfig():
 
     return _instance.getPlayerConfig()
 
-def getValue(config, key, cls, attrs=None):
+def getValue(config, key, cls, attrs=None, notNone=True, default=None):
     global _instance
     
     className = cls.__name__
@@ -117,11 +117,16 @@ def getValue(config, key, cls, attrs=None):
     if maxValue is not None and maxValue < ret:
         raise RuntimeError("Configuration error: The maximum allowed value for {key} is {max}".format(key=key, max=maxValue))
 
+    if ret is None and notNone is True:
+        raise RuntimeError("{key} has to be defined".format(key=key))
+
+    elif ret is None:
+        ret = default
     # list checks
     listCount = attrs.get("elements", None)
     if listCount is not None and isinstance(ret, list) and len(ret) < listCount:
         raise RuntimeError("Configuration error: The {key} list has to contain at least {count} elements".format(key=key, count=listCount))
-
+    
     # sound and music property checks
     if key.endswith("sound"):
         volume = config.get("%s-volume" % key, constants.AUDIO_DEFAULT_SOUND_VOLUME)

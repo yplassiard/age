@@ -12,6 +12,8 @@ AUDIO_ERROR_SOUND = "error-sound"
 AUDIO_MESSAGE_SOUND = "message"
 AUDIO_MESSAGE_FINISH_SOUND = "messageFinished"
 
+AUDIO_FOOTSTEP_WALK_SOUND = "walk"
+AUDIO_FOOTSTEP_RUN_SOUND = "run"
 
 # Scene constants
 
