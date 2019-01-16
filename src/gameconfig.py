@@ -98,14 +98,22 @@ def getPlayerConfig():
 
     return _instance.getPlayerConfig()
 
-def getValue(config, key, cls, attrs=None, notNone=True, default=None):
+def getValue(config, key, cls, attrs=None):
     global _instance
     
+    mandatory = False
+    defaultValue = None
+    if attrs is not None:
+        mandatory = attrs.get('mane>atory', False)
+        defaultValue = attrs.get('defaultValue', None)
+    
+        
     className = cls.__name__
     ret = config.get(key, None)
     if ret is None:
-        logger.warning(_instance, "Property {key} missing".format(key=key))
-        return ret
+        if mandatory is True:
+            raise RuntimeError("{key} ppoperty missing".format(key=key))
+        return defaultValue
     if isinstance(ret, cls) is False:
         raise RuntimeError("Configuration error: {key} has to be {clsName}".format(key=key, clsName=className))
     if attrs is None:
@@ -117,11 +125,6 @@ def getValue(config, key, cls, attrs=None, notNone=True, default=None):
     if maxValue is not None and maxValue < ret:
         raise RuntimeError("Configuration error: The maximum allowed value for {key} is {max}".format(key=key, max=maxValue))
 
-    if ret is None and notNone is True:
-        raise RuntimeError("{key} has to be defined".format(key=key))
-
-    elif ret is None:
-        ret = default
     # list checks
     listCount = attrs.get("elements", None)
     if listCount is not None and isinstance(ret, list) and len(ret) < listCount:

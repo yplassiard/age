@@ -1,5 +1,5 @@
 {
-    "title": "Main Menu",
+    "title": "Menu Principal",
     "name": "mainmenu",
     "type": "menu",
     "speak-title": true,
@@ -9,5 +9,7 @@
         "1": "continue_adventure",
         "2": "__quit"
     },
-    "select-sound": "menuSelect"
+    "select-sound": "menuSelect",
+    "validate-sound": "menuValidate",
+    "cancel-sound": "menuCancel"
 }

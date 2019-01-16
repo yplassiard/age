@@ -20,8 +20,10 @@ SCENE_INTERVAL_DEACTIVATE = 14
 SCENE_INTERVAL_TICK = 15
 # hero specific events
 HERO_SPAWN = 50
-HERO_WALK = 51
-HERO_RUN = 52
+HERO_WALK_START = 51
+HERO_WALK_STOP = 52
+HERO_RUN_START = 53
+HERO_RUN_STOP = 54
 
 
 
@@ -50,8 +52,10 @@ eventNames = {
     PAUSE_GAME: "pause_game",
 
     HERO_SPAWN: "hero_spawn",
-    HERO_WALK: "hero_walk",
-    HERO_RUN: "hero_run"
+    HERO_WALK_START: "hero_walk_start",
+    HERO_WALK_STOP: "hero_walk_stop",
+    HERO_RUN_START: "hero_run_start",
+    HERO_RUN_STOP: "hero_run_stop"
 }
 
 def addListener(obj):
@@ -91,5 +95,5 @@ def dispatch(event):
             try:
                 method(event.get('data', None))
             except Exception as e:
-                logger.error("eventManager", "Failed to execute {name}.{script}({event}): {exception}".format(name=listener.__class__.__name__, script=script, event=event, exception=e))
+                logger.exception("eventManager", "Failed to execute {name}.{script}({event}): {exception}".format(name=listener.__class__.__name__, script=script, event=event, exception=e), e)
                 continue

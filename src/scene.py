@@ -17,6 +17,8 @@ class Scene(object):
     activateSound = None
     deactivateSound = None
     musics = []
+    speechName = None
+    speechDescription = None
 
     def __init__(self, name, config):
         if name is None:
@@ -27,9 +29,10 @@ class Scene(object):
             self.activateSound = config.get("enterSound", None)
             self.deactivateSound = config.get("leaveSound", None)
             self.links = config.get("links", {})
-            self.musics = gameconfig.getValue(config, "musics", list)
-            if self.musics is None:
-                self.musics = []
+            self.speechName = gameconfig.getValue(config, "speech-name", str, {"defaultValue": self.name})
+            self.speechDescription = gameconfig.getValue(config, "speech-description", str, {"mandatory": False, "defaultValue": ""})
+
+            self.musics = gameconfig.getValue(config, "musics", list, {"defaultValue": []})
             for music in self.musics:
                 music["scene"] = self
                 if audio.loadMusic(music) is False:
@@ -59,14 +62,8 @@ class Scene(object):
             audio.play(self.deactivateSound)
             
 
-    def getSpeechName(self):
-        return ''
-
-    def getSpeechDescription(self):
-        return ''
-
-    def getSpeechHint(self):
-        return ''
+    def describe(self):
+        speech.speak("{name}: {description}".format(name=self.speechName, description=self.speechDescription))
     
     def onKeyDown(self, key, mods):
         """Fired when a key is pressed (keyboard or joystick.)"""
@@ -93,7 +90,9 @@ class Scene(object):
                 logger.error(self, "Error executing action {action}: {exception}".format(action=script, exception=e))
                 audio.play(constants.AUDIO_ERROR_SOUND)
 
-
+    def getMusics(self):
+        return self.musics
+    
 
 
 class IntervalScene(Scene):
@@ -156,9 +155,9 @@ possible to implement option selection."""
         self.speakTitle = config.get("speak-title", True)
         self.title = config.get('title', 'unknown')
         self.selectSound = config.get('select-sound', None)
-        self.selectSoundVolume = config.get("select-sound-volume", 0.8)
+        self.selectSoundVolume = config.get("select-sound-volume", constants.AUDIO_FX_VOLUME)
         self.validateSound = config.get('validate-sound', None)
-        self.validateSoundVolume = config.get('validate-sound-volume', 0.8)
+        self.validateSoundVolume = config.get('validate-sound-volume', constants.AUDIO_FX_VOLUME)
         self.cancelSound = config.get('cancel-sound', None)
         self.cancelSoundVolume = config.get('cancel-sound-volume', 0.8)
         self.useStereo = config.get('use-stereo', True)
@@ -215,6 +214,7 @@ possible to implement option selection."""
             self.speakChoice()
 
     def input_press_action(self):
+        audio.play(self.validateSound, self.validateSoundVolume)
         leaveCurrentScene()
 
 
@@ -299,7 +299,7 @@ to an integer within the scene configuration."""
 
 # Map Scene helper
 
-class MapRegionScene(Scene):
+class MapRegionScene(IntervalScene):
     """Defines a region ef the map where the player can walk into. In such a region, the player can
 walk in four directions, reaching an exit leading to another map region.
 A region is represented as a rectangle.
@@ -308,26 +308,35 @@ A region is represented as a rectangle.
     width = 0
     regionLinks = None
     heroPosition = None
+    walkSounds = []
+    runSounds = []
+    isWalking = False
+    isRunning = False
 
     def __init__(self, name, config):
+        config["interval"] = 40
         super().__init__(name, config)
         import sceneManager
         self.hero = sceneManager.getPlayer()
         self.height = gameconfig.getValue(config, "height", int, {"minValue": 1})
         self.width = gameconfig.getValue(config, "width", int, {"minValue": 1})
         self.regionLinks = gameconfig.getValue(config, "region-links", list, {"elements": 1})
-        self.objects = gameconfig.getValue(config, "objects", list, notNone=False)
+        self.objects = gameconfig.getValue(config, "objects", list, {"mandatory": True})
         if self.objects is None:
             self.objects = []
         
 
-
+        self.walkSounds = gameconfig.getValue(config, "walking", list, {"elements": 1, "defaultValue": []})
+        
     def getLogName(self):
         return "MapRegionScene(%s)" % self.name
 
     def activate(self, silent=False, params=None):
         super().activate(silent, params)
         self.heroPosition = None
+        self.sceneTicks = 0
+        self.isWalking = False
+        self.isRunning = False
         if params is not None:
             enter = params.get('enter', None)
             if enter is not None:
@@ -352,29 +361,68 @@ A region is represented as a rectangle.
         eventManager.post(eventManager.HERO_SPAWN, {"scene": self, "position": self.heroPosition})
 
     def input_press_up(self):
-        self.onWalk(constants.DIRECTION_NORTH)
+        self.direction = constants.DIRECTION_NORTH
+        self.onWalk()
 
     def input_press_down(self):
-        self.onWalk(constants.DIRECTION_SOUTH)
+        self.direction = constants.DIRECTION_SOUTH
+        self.onWalk()
 
     def input_press_right(self):
-        self.onWalk(constants.DIRECTION_EAST)
+        self.direction = constants.DIRECTION_EAST
+        self.onWalk()
 
     def input_press_left(self):
-        self.onWalk(constants.DIRECTION_YEST)
+        self.direction = constants.DIRECTION_WEST
+        self.onWalk()
 
+    def input_release_up(self):
+        self.stopMoving()
+    def input_release_down(self):
+        self.stopMoving()
+    def input_release_left(self):
+        self.stopMoving()
+    def input_release_right(self):
+        self.stopMoving()
+    
     def input_press_action(self):
         self.onAction()
+    def input_press_shift_up(self):
+        self.direction = constants.DIRECTION_NORTH
+        self.onWalk(True)
 
-    def onWalk(self, direction):
+    def input_press_shift_down(self):
+        self.direction = constants.DIRECTION_SOUTH
+        self.onWalk(True)
+
+    def input_press_shift_right(self):
+        self.direction = constants.DIRECTION_EAST
+        self.onWalk(True)
+
+    def input_press_shift_left(self):
+        self.direction = constants.DIRECTION_WEST
+        self.onWalk(True)
+
+    def input_release_shift_up(self):
+        self.stopMoving()
+    def input_release_shift_down(self):
+        self.stopMoving()
+    def input_release_shift_left(self):
+        self.stopMoving()
+    def input_release_shift_right(self):
+        self.stopMoving()
+    
+
+
+    def onWalk(self, running=False):
         newPos = self.heroPosition
-        if direction == constants.DIRECTION_NORTH:
+        if self.direction == constants.DIRECTION_NORTH:
             newPos[1] -= 1
-        elif direction == constants.DIRECTION_SOUTH:
+        elif self.direction == constants.DIRECTION_SOUTH:
             newPos[1] += 1
-        elif direction == constants.DIRECTION_EAST:
+        elif self.direction == constants.DIRECTION_EAST:
             newPos[0] += 1
-        elif direction == constants.DIRECTION_WEST:
+        elif self.direction == constants.DIRECTION_WEST:
             newPos[0] -= 1
 
         # now, let's see what's on this new position
@@ -399,12 +447,34 @@ A region is represented as a rectangle.
         self.heroPosition = newPos
         footStepSound = self.getGroundTypeSound()
         audio.play(footStepSound[0], footStepSound[1], audio.computePan(0, self.width, newPos[0]))
-        eventManager.post(eventManager.HERO_WALK, {"position": self.heroPosition, "scene": self})
+        
+        eventManager.post(eventManager.HERO_WALK_START, {"position": self.heroPosition, "scene": self})
+        if self.isRunning is False and running is True:
+            self.isRunning = True
+        elif self.isRunning is False:
+            self.isWalking = True
 
+    def stopMoving(self):
+        self.isWalking = False
+        self.isRunning = False
+        self.direction = None
+        self.sceneTicks = 0
+    
+
+    def event_interval(self):
+        speed = 10
+        if self.isRunning:
+            speed = 7
+        if self.isWalking or self.isRunning:
+            self.sceneTicks += 1                    
+            if self.sceneTicks % speed == 0:
+                self.onWalk()
     def getGroundTypeSound(self):
-        ret = gameconfig.getValue(self.config, "footssep-walk-sound", str)
-        if ret is None:
-            ret = [constants.AUDIO_FOOTSTEP_WALK_SOUND, constants.AUDIO_FX_VOLUME]
+        import random
+        if self.walkSounds is None:
+            return
+        idx = random.randint(0, len(self.walkSounds) - 1)
+        ret = [self.walkSounds[idx], constants.AUDIO_FX_VOLUME]
         return ret
     
             

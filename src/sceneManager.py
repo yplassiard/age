@@ -77,7 +77,7 @@ class SceneManager(object):
             return False
         if self.activeScene is not None:
             self.activeScene.deactivate(silentLeaving)
-            eventManager.post(eventManager.LEAVE_SCENE, {"scene": self.activeScene})
+            eventManager.post(eventManager.LEAVE_SCENE, {"scene": self.activeScene, "nextScene": s})
         self.activeScene = s
         s.activate(silentEntering, params)
 
@@ -139,8 +139,6 @@ class SceneManager(object):
 
     def event_scene_interval_tick(self, evt):
         now = evt.get('time', 0)
-        if now == 0:
-            raise RuntimeError("Invalid zero time for interval.")
         for x in self.intervalScenes:
             if x._nextTick <= now:
                 try:
@@ -182,6 +180,11 @@ class SceneManager(object):
 
     def input_press_control_shift_l(self):
         self.load("sceneloader")
+    def input_press_d(self):
+        s = self.getActiveScene()
+        if s is not None:
+            s.describe()
+    
         
 
 def initialize(gameConfig):

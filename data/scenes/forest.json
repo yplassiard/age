@@ -10,6 +10,7 @@
               "loop": -1
              }
          ],
+         "walking": ["step1", "step2", "step3", "step4"],
          "region-links": [
              {"name": "north",
               "link": "forest_c2.south",
