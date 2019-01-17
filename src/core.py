@@ -19,8 +19,7 @@ def main():
     global currentTicks
     
     logger.initialize()
-    gc = gameconfig.GameConfig("a3g-engine.json")
-    if gc is None:
+    if gameconfig.initialize("a3g-engine.json") is False:
         logger.error("main", "Invalid configuration.")
         return
     if speech.initialize() is False:
@@ -29,10 +28,10 @@ def main():
     speech.cancelSpeech()
     speech.speak("Welcome to A3 Game Engine!")
 
-    if audio.initialize(gc) is False:
+    if audio.initialize() is False:
         logger.error("main", "Failed to initialize sound support.")
         return
-    if sceneManager.initialize(gc) is False:
+    if sceneManager.initialize() is False:
         logger.error("main", "Unable to initialize scenes.")
         print("Unable to initialize scenes: Check the logfile for more details.")
         return
@@ -59,8 +58,8 @@ def main():
     while 1:
         event = pygame.event.poll()
         if event.type == pygame.VIDEOEXPOSE and exposed is False:
-            if sceneManager.loadScene(gc.getStartScene()) is False:
-                print("Failed to load first scene {name}".format(name=gc.getStartScene()))
+            if sceneManager.loadScene(gameconfig.getStartScene()) is False:
+                print("Failed to load first scene {name}".format(name=gameconfig.getStartScene()))
                 return
             else:
                 exposed = True

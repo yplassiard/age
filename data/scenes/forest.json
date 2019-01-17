@@ -8,6 +8,11 @@
              {"name": "ambiant-forest",
               "file": "forest-ambiance.ogg",
               "loop": -1
+             },
+             {"name": "forest-music",
+              "file": "forest-music.ogg",
+              "loops": -1,
+              "volume": 0.3
              }
          ],
          "walking": ["forest-step1", "forest-step2", "forest-step3", "forest-step4"],
@@ -27,6 +32,13 @@
          "type": "mapregion",
          "height": 30,
          "width": 30,
+         "musics": [
+             {"name": "forest-music",
+              "file": "forest-music.ogg",
+              "loops": -1,
+              "volume": 0.8
+             }
+         ],
          "region-links": [
              {"name": "south",
               "link": "forest_c3.north",

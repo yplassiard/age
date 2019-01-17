@@ -476,7 +476,7 @@ A region is represented as a rectangle.
             self.onWalk(self.isRunning)
     def getGroundTypeSound(self):
         import random
-        if self.walkSounds is None:
+        if self.walkSounds is None or len(self.walkSounds) == 0:
             return
         idx = random.randint(0, len(self.walkSounds) - 1)
         ret = [self.walkSounds[idx], constants.AUDIO_FX_VOLUME]

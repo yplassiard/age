@@ -11,8 +11,12 @@ class Sound(object):
     snd = None
     channel = None
 
-    def __init__(self, name, file, volume=constants.AUDIO_FX_VOLUME, loop=False, _isMusic=False):
+    def __init__(self, fmod, name, file, volume=constants.AUDIO_FX_VOLUME, loop=False, _isMusic=False):
         super().__init__()
+        if fmod is None:
+            raise RuntimeError("Cannot create a sound without FMOD initialized.")
+        
+        self.fmod = fmod
         dir = 'sounds'
         if _isMusic:
             dir = 'musics'
@@ -20,18 +24,17 @@ class Sound(object):
         self.file = file
         self.volume = volume
         self.channel = None
-        self.snd = None
+        
         try:
-            self.snd = pygame.mixer.Sound(os.path.join("data", dir, self.file))
+            self.snd = self.fmod.create_sound(os.path.join("data", dir, self.file))
         except Exception as e:
             logger.exception(self, "Unable to load soune: {e}".format(e=e), e)
             self.snd = None
-            return
-    def setVolume(self, left, right=None):
-        if right is None:
-            right = left
+            
+    def setVolume(self, volume, pan=0.0):
+        """Sets the volume and sound panoramic."""
         if self.isPlaying():
-            self.channel.set_volume(left, right)
+            self.channel.volume(volume)
         else:
             logger.warning(self, "Unable to set volume on inactive sound {name}".format(name=self.name))
 
@@ -42,29 +45,42 @@ class Sound(object):
             logger.error(self, "Cannot play a not loaded sound.")
             return False
         try:
-            self.channel = self.snd.play()
+            self.channel = self.snd.play(paused=True)
+            self.channel.position = [0.0, 1.0, 1.0]
+            self.channel.play()
         except Exception as e:
             logger.exception(self, "Error playing {name}: {e}".format(name=self.name, e=e), e)
             return False
         return True
+    def pan(self, value):
+        logger.info(self, "Pan: {value}".format(value=value))
+        if self.channel is not None:
+            self.channel.position = [value, 1.0, 1.0]
+    
     def stop(self):
         if self.isPlaying():
-            self.snd.stop()
+            self.channel.stop()
             self.channel = None
             return True
         return False
     def isPlaying(self):
         if self.channel is None:
             return False
-        return self.channel.get_busy()
+        ret = self.channel.is_playing
+        if ret is False:
+            self.onEnded()
+
+    def onEnded(self):
+        self.channel = None
+    
 
     def getLogName(self):
         return "Sound(%s, %s)" %(self.name, self.file)
 
 class Music(Sound):
     loops = -1
-    def __init__(self, name, file, volume=constants.AUDIO_FX_VOLUME, fadeIn=True, loops=-1):
-        super().__init__(name, file, volume, _isMusic=True)
+    def __init__(self, fmod, name, file, volume=constants.AUDIO_MUSIC_VOLUME, fadeIn=True, loops=-1, snd=None):
+        super().__init__(fmod, name, file, volume, snd, _isMusic=True)
         self.loops = loops
         self.fadeIn = fadeIn
 
@@ -72,12 +88,13 @@ class Music(Sound):
         if self.isPlaying():
             self.stop()
         try:
-            self.channel = self.snd.play(loops=self.loops)
+            self.channel = self.snd.play()
+            self.channel.loop_count = loops
             if self.fadeIn:
-                self.channel.set_volume(0)
+                self.channel.volume = 0
                 effects.timeEffects.append(effects.VolumeEffect(self, self.volume))
             else:
-                self.channel.set_volume(self.volume)
+                self.channel.volume = self.volume
             self.playing = True
         except Exception as e:
             logger.error(self, "Failed to play: {e}".format(e=e))
@@ -86,7 +103,8 @@ class Music(Sound):
     def stop(self, fadeOut=False):
         if self.isPlaying():
             if fadeOut is False:
-                self.snd.stop()
+                self.channel.stop()
+                self.channel = None
             else:
                 effects.timeEffects.append(effects.VolumeEffect(self, 0.0))
             return True
@@ -95,7 +113,10 @@ class Music(Sound):
             
         
     def setVolume(self, volume):
+        """Sets the volume property without affecting the real sound volume."""
         self.volume = volume
+    
     def setFadeIn(self, fadeIn):
+        """Sets the FadeIn Property without affecting the real fade in effect."""
         self.fadeIn = fadeIn
     

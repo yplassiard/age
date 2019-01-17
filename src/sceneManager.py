@@ -29,7 +29,7 @@ class SceneManager(object):
     activeScene = None
     player = None
 
-    def __init__(self, gameConfig):
+    def __init__(self):
         eventManager.addListener(self)
         pc = gameconfig.getPlayerConfig()
         if pc is None:
@@ -187,12 +187,12 @@ class SceneManager(object):
     
         
 
-def initialize(gameConfig):
+def initialize():
     global _instance
 
     if _instance is None:
         try:
-            _instance = SceneManager(gameConfig)
+            _instance = SceneManager()
         except Exception as e:
             logger.exception("sceneManager", "Failed to initialize scene manager", e)
             return False
@@ -213,7 +213,7 @@ def initialize(gameConfig):
             logger.info(_instance, "Loading scene {name}".format(name=m.group(1)))
             totalScenes += 1
             try:
-                obj = __import__("scenes.%s" % m.group(1), globals(), locals(), ("scenes")).Scene(m.group(1), gameConfig.getSceneConfiguration(m.group(1)))
+                obj = __import__("scenes.%s" % m.group(1), globals(), locals(), ("scenes")).Scene(m.group(1), gameconfig.getSceneConfiguration(m.group(1)))
                 if obj is not None:
                     _instance.addScene(m.group(1), obj)
                     loadedScenes += 1
@@ -229,7 +229,7 @@ def initialize(gameConfig):
         for entry in dir:
             m = re.match("(^[^#]*.*)\.json$", entry.name)
             if m is not None:
-                jsonConfigList = gameConfig.loadSceneConfiguration(entry.name)
+                jsonConfigList = gameconfig.loadSceneConfiguration(entry.name)
                 for jsonConfig in jsonConfigList:
                     totalScenes += 1
                     if jsonConfig is not None:

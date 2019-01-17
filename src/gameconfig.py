@@ -11,18 +11,20 @@ class GameConfig(object):
     """Loads the engine configuration file and provides methods to get/set config values."""
     config = None
     def __init__(self, file):
+        self.file = file
+        sys.path.append(self.getLibraryPath())
+        
+    def init(self):
         try:
-            fileObject = io.FileIO(file)
+            fileObject = io.FileIO(self.file)
             data = fileObject.readall()
             fileObject.close()
             self.config = json.loads(data)
-            global _instance
-            
-            _instance = self
-            sys.path.append(self.getLibraryPath())
+            return True
         except Exception as e:
             logger.error(self, "failed to load file: %s" %(e))
-            
+            return False
+
 
     def getSoundResources(self):
         try:
@@ -74,13 +76,24 @@ class GameConfig(object):
           
 
     def getLibraryPath(self):
-        return os.path.join(constants.CONFIG_RESOURCE_DIR, platform.system().lower(), platform.architecture()[0])
+        return os.path.join(os.path.abspath(constants.CONFIG_RESOURCE_DIR), platform.system().lower(), platform.architecture()[0])
     
     
     def getLogName(self):
         return "Configuration"
     
             
+
+
+def initialize(file):
+    global _instance
+
+    if _instance is not None:
+        return True
+    _instance = GameConfig(file)
+    if _instance and _instance.init() is True:
+        return True
+    return False
 
 
 def getLibraryPath():
@@ -97,6 +110,33 @@ def getPlayerConfig():
     global _instance
 
     return _instance.getPlayerConfig()
+
+def getSoundResources():
+    global _instance
+
+    if _instance is not None:
+        return _instance.getSoundResources()
+    return []
+
+def loadSceneConfiguration(jsonFile):
+    global _instance
+
+    if _instance is not None:
+        return _instance.loadSceneConfiguration(jsonFile)
+    return None
+def getSceneConfiguration(name):
+    global _instance
+
+    if _instance is not None:
+        return _instance.getSceneConfiguration(name)
+    return None
+
+def getStartScene():
+    global _instance
+
+    if _instance is not None:
+        return _instance.getStartScene()
+    return None
 
 def getValue(config, key, cls, attrs=None):
     global _instance

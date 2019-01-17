@@ -26,18 +26,23 @@ class AudioManager(object):
     musicMap = {}
 
     
-    def __init__(self, gameConfig):
+    def __init__(self):
         """Initializes the AudioManager with the help of L{GameConfig} object."""
-        if gameConfig is None:
-            raise RuntimeError("Missing game configuration")
         eventManager.addListener(self)
-
-        pygame.mixer.pre_init(44100, -16, 2, 512)
-        pygame.mixer.init()
-        for s in gameConfig.getSoundResources():
+        try:
+            from . import pyfmodex
+            self.fmod = pyfmodex.System()
+            self.fmod.init()
+            self.listener = self.fmod.listener()
+            self.listener.position = [0.0, 0.0, 0.0]
+        except Exception as e:
+            logger.exception(self, "Failed to load FMOD library: {e}".format(e=e), e)
+            raise
+        
+        for s in gameconfig.getSoundResources():
             logger.info(self, "Loading {name} ({file})".format(name=s["name"], file=s["file"]))
             try:
-                snd = sound.Sound(s["name"], s["file"])
+                snd = sound.Sound(self.fmod, s["name"], s["file"])
                 self.soundMap[s["name"]] = snd
             except Exception as e:
                 logger.exception(self, "Failed to load {file}: {exception}".format(file=s["file"], exception=e), e)
@@ -49,28 +54,31 @@ class AudioManager(object):
         name = gameconfig.getValue(config, "name", str)
         file = gameconfig.getValue(config, "file", str)
         loop = gameconfig.getValue(config, "loop", int, {"defaultValue": -1})
+        volume = gameconfig.getValue(config, "volume", float, {"minValue": 0.0,
+                                                               "maxValue": 1.0,
+                                                               "defaultValue": constants.AUDIO_MUSIC_VOLUME})
+        
         if loop is None:
             loop = -1
         if name is None or file is None:
             raise RuntimeError("Missing name or file property for music")
-        if self.musicMap.get(name, None) is not None:
-            raise RuntimeError("Music's name {name} already defined".format(name=name))
+        loaded = self.musicMap.get(name, None)
+        if loaded is not None:
+            return True
         try:
-            logger.info(self, "Loading music {name} ({file})".format(name=name, file=file))
-            snd = sound.Music(name, file, loops=loop, fadeIn=True)
+            logger.info(self, "Loading music {name} ({file}, {volume})".format(name=name, file=file, volume=volume))
+            snd = sound.Music(self.fmod, name, file, loops=loop, volume=volume, fadeIn=True)
         except Exception as e:
             logger.error(self, "Cannot load music {name} ({file}): {exception}".format(name=name, file=file, exception=e))
             return False
         self.musicMap[name] = snd
         return True
     
-    def play(self, name, volume, pan=(1.0, 1.0), fadeIn=False):
+    def play(self, name, volume, pan=0.0):
         snd = self.soundMap.get(name, None)
-        left = volume * pan[0]
-        right = volume * pan[1]
         if snd is not None:
             snd.play()
-            snd.setVolume(left, right)
+            snd.pan(pan)
         else:
             logger.error(self, "Sound {name} is not loaded.".format(name=name))
 
@@ -79,12 +87,11 @@ class AudioManager(object):
         if snd is not None and snd.isPlaying():
             snd.stop()
 
-    def playMusic(self, name, volume=constants.AUDIO_MUSIC_VOLUME, fadeIn=True):
+    def playMusic(self, name, fadeIn=True):
         music = self.musicMap.get(name, None)
         if music is None:
             logger.error(self, "Music {name} not loaded".format(name=name))
             return False
-        music.setVolume(volume)
         music.setFadeIn(fadeIn)
         music.play()
 
@@ -113,6 +120,7 @@ class AudioManager(object):
             for m in nextSceneMusic:
                 if m["name"] == music:
                     found = True
+                    
             if not found:
                 logger.info(self, "stopping {music}".format(music=music))
                 self.musicMap[music].stop(fadeOut=True)
@@ -131,12 +139,12 @@ class AudioManager(object):
                     continue
                 effect._lastTick = now
     
-                    
+        self.fmod.update()
         
-def initialize(gameConfig):
+def initialize():
     if _instance is None:
         try:
-            am = AudioManager(gameConfig)
+            am = AudioManager()
             return True
         except Exception as e:
             logger.exception("audio", "Error initializing audio: {exception}".format(exception=e), e)
@@ -146,10 +154,10 @@ def play(name, volume=constants.AUDIO_FX_VOLUME, pan=(1.0, 1.0)):
     global _instance
 
     _instance.play(name, volume, pan)
-def playMusic(name, volume=constants.AUDIO_MUSIC_VOLUME, fadeIn=True):
+def playMusic(name, fadeIn=True):
     global _instance
 
-    _instance.playMusic(name, volume)
+    _instance.playMusic(name, fadeIn)
 
 
 def loadMusic(config):
@@ -164,16 +172,14 @@ def stopMusic(name):
 
 def computePan(minValue, maxValue, currentValue):
     step = maxValue - minValue
-    x = (currentValue - minValue) / step
-    
-    l = 1.0
-    r = 1.0
-    if x < 0.5:
-        r -= (1 - x * 2)
-        if r < 0.1:
-            r = 0.1
-    elif x > 0.5:
-        l -= 1 - (1 - x) * 2
-        if l < 0.1:
-            l = 0.1
-    return l,r
+    x = (currentValue - minValue) / step * 2
+    ret = 0.0
+    if x < 1.0:
+        ret = -(1.0 - x)
+    elif x > 1.0:
+        ret = x - 1.0
+    if ret < -0.9:
+        ret = -0.9
+    elif ret > 0.9:
+        ret = 0.9
+    return ret
