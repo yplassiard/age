@@ -1,6 +1,7 @@
 # *-* coding: utf8 *-*
 
 import constants
+import core
 import eventManager
 import inputHandler
 import speech
@@ -343,10 +344,11 @@ A region is represented as a rectangle.
                 for region in self.regionLinks:
                     if region.get("name", None) == enter:
                         pos = gameconfig.getValue(region, "position", list, {"elements": 4})
+                        speech.speak("Endering {name} {enter}: {pos}".format(name=self.name, enter=enter, pos=pos))
                         if pos[0] == pos[2]:
-                            self.heroPosition = [pos[0], pos[1] + int((pos[3] - pos[1]) / 2)]
+                            self.heroPosition = [pos[0] + 1 if pos[0] == 0 else self.width - 2, pos[1] + int((pos[3] - pos[1]) / 2)]
                         elif pos[1] == pos[3]:
-                            self.heroPosition = [pos[0] + int((pos[2] - pos[0]) / 2), pos[1]]
+                            self.heroPosition = [pos[0] + int((pos[2] - pos[0]) / 2), pos[1] + 1 if pos[1] == 0 else self.height - 2]
                         else:
                             self.heroPosition = [int(self.width / 2), int(self.height / 2)]
                 if self.heroPosition is None:
@@ -415,11 +417,18 @@ A region is represented as a rectangle.
 
 
     def onWalk(self, running=False):
-        newPos = self.heroPosition
+        delta = core.currentTicks - self.sceneTicks
+        
+        if delta < constants.HERO_RUN_TIME and running:
+            return
+        if delta < constants.HERO_WALK_TIME and not running:
+            return
+        self.sceneTicks = core.currentTicks
+        newPos = self.heroPosition.copy()
         if self.direction == constants.DIRECTION_NORTH:
-            newPos[1] -= 1
-        elif self.direction == constants.DIRECTION_SOUTH:
             newPos[1] += 1
+        elif self.direction == constants.DIRECTION_SOUTH:
+            newPos[1] -= 1
         elif self.direction == constants.DIRECTION_EAST:
             newPos[0] += 1
         elif self.direction == constants.DIRECTION_WEST:
@@ -441,9 +450,10 @@ A region is represented as a rectangle.
                 self.nextScene = scene
                 leaveCurrentScene(params={"enter": enter})
                 return
-                
+        if newPos[0] == 0 or newPos[0] == self.width or newPos[1] == 0 or newPos[1] == self.height:
+            return # this is a wall
         # If we reach this, nothing prevents us to walk this way
-
+        
         self.heroPosition = newPos
         footStepSound = self.getGroundTypeSound()
         audio.play(footStepSound[0], footStepSound[1], audio.computePan(0, self.width, newPos[0]))
@@ -458,17 +468,12 @@ A region is represented as a rectangle.
         self.isWalking = False
         self.isRunning = False
         self.direction = None
-        self.sceneTicks = 0
+
     
 
     def event_interval(self):
-        speed = 10
-        if self.isRunning:
-            speed = 7
         if self.isWalking or self.isRunning:
-            self.sceneTicks += 1                    
-            if self.sceneTicks % speed == 0:
-                self.onWalk()
+            self.onWalk(self.isRunning)
     def getGroundTypeSound(self):
         import random
         if self.walkSounds is None:

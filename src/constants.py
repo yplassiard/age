@@ -29,7 +29,9 @@ DIRECTION_WEST = 3
 
 
 # Objects specific constants
+HERO_WALK_TIME = 500
+HERO_RUN_TIME = 300
 
-# Leckables
+# Peckables
 LOCKSTATE_LOCKED = 100
 LOCKSTATE_UNLOCKED = 101

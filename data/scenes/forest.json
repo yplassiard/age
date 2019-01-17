@@ -10,17 +10,16 @@
               "loop": -1
              }
          ],
-         "walking": ["step1", "step2", "step3", "step4"],
+         "walking": ["forest-step1", "forest-step2", "forest-step3", "forest-step4"],
          "region-links": [
              {"name": "north",
-              "link": "forest_c2.south",
+              "link": "forest_c4.south",
               "position": [12, 29, 18, 29],
               "spawn-height": "0"
              },
              {"name": "south",
               "link": "forest_c4.north",
-              "position": [12, 0, 18, 0],
-              "spawn-height": 29
+              "position": [12, 0, 18, 0]
              }
          ]
         },
@@ -31,8 +30,7 @@
          "region-links": [
              {"name": "south",
               "link": "forest_c3.north",
-              "position": [12, 0, 18, 0],
-              "spawn-height": 29
+              "position": [12, 0, 18, 0]
              }
          ]
         },
@@ -43,8 +41,7 @@
          "region-links": [
              {"name": "north",
               "link": "forest_c3.south",
-              "position": [29, 12, 29, 18],
-              "spawn-height": 0
+              "position": [12, 29, 18, 29]
              }
          ]
         }
