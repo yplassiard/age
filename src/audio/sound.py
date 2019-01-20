@@ -48,6 +48,10 @@ class Sound(object):
             self.channel.position = [pan, 0.0, 1.0]
         else:
             logger.warning(self, "Unable to set volume on inactive sound {name}".format(name=self.name))
+    def getVolume(self):
+        if self.channel is not None:
+            return self.channel.volume
+        return None
 
     def play(self):
         if self.isPlaying():
@@ -106,7 +110,7 @@ class Music(Sound):
 
     def play(self):
         if self.isPlaying():
-            self.stop()
+            return True
         try:
             self.channel = self.snd.play()
             self.channel.loop_count = self.loops

@@ -2,6 +2,7 @@
 
 import logger
 import constants
+import core
 import gameconfig
 import eventManager
 import pygame
@@ -54,7 +55,7 @@ class AudioManager(object):
     def loadMusic(self, config):
         name = gameconfig.getValue(config, "name", str)
         file = gameconfig.getValue(config, "file", str)
-        loop = gameconfig.getValue(config, "loop", int, {"defaultValue": -1})
+        loop = gameconfig.getValue(config, "loops", int, {"defaultValue": -1})
         volume = gameconfig.getValue(config, "volume", float, {"minValue": 0.0,
                                                                "maxValue": 1.0,
                                                                "defaultValue": constants.AUDIO_MUSIC_VOLUME})
@@ -114,6 +115,7 @@ class AudioManager(object):
     # events
 
     def event_leave_scene(self, event):
+        core.startAnimation()
         s = event.get("scene", None)
         if s is None:
             return
@@ -131,14 +133,25 @@ class AudioManager(object):
             if not found:
                 logger.info(self, "stopping {music}".format(music=music))
                 self.musicMap[music].stop(fadeOut=True)
+            else:
+                newVolume = gameconfig.getValue(m, "volume", float, {"defaultValue": constants.AUDIO_FX_VOLUME})
+                if newVolume != self.musicMap[music].getVolume():
+                    effects.timeEffects.append(effects.VolumeEffect(self.musicMap[music], newVolume))
+                
         return
     
     def event_scene_interval_tick(self, event):
         now = event.get("time", 0)
+        if len(effects.timeEffects) == 0:
+            core.stopAnimation()
         for effect in effects.timeEffects:
             if isinstance(effect, effects.VolumeEffect):
                 # logger.info(self, "Adjusting {name}(volume={volume}, step={step})".format(name=effect.name, volume=effect.curVolume, step=effect.stepValue))
                 effect.curVolume += effect.stepValue
+                if effect.sound is None or effect.sound.channel is None:
+                    effects.timeEffects.remove(effect)
+                    continue
+                    
                 effect.sound.channel.volume = effect.curVolume
                 if effect.isCompleted():
                     logger.info(self, "Effect {e} completed".format(e=effect))

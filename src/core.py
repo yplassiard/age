@@ -15,8 +15,22 @@ import sceneManager
 
 currentTicks = 0
 
+def startAnimation():
+    global _inAnimation
+
+    _inAnimation = True
+def stopAnimation():
+    global _inAnimation
+
+    _inAnimation = False
+
+def isInAnimation():
+    global _inAnimation
+
+    return _inAnimation
+
 def main():
-    global currentTicks
+    global currentTicks, _inAnimation
     
     logger.initialize()
     if gameconfig.initialize("a3g-engine.json") is False:
@@ -26,7 +40,8 @@ def main():
         logger.error("main", "Failed to start due to a lack of speech support.")
         return False
     speech.cancelSpeech()
-    speech.speak("Welcome to A3 Game Engine!")
+    speech.speak("Chargement en cours...")
+    startAnimation()
 
     if audio.initialize() is False:
         logger.error("main", "Failed to initialize sound support.")
@@ -63,11 +78,12 @@ def main():
                 return
             else:
                 exposed = True
+                stopAnimation()
         elif event.type == QUIT:
             return
-        elif event.type == pygame.KEYDOWN:
+        elif event.type == pygame.KEYDOWN and isInAnimation() is False:
             sceneManager.onKeyDown(event.key, event.mod)
-        elif event.type == pygame.KEYUP:
+        elif event.type == pygame.KEYUP and isInAnimation() is False:
             sceneManager.onKeyUp(event.key, event.mod)
         # check our own events
 

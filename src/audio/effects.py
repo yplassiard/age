@@ -1,5 +1,7 @@
 # *-* coding: utf8 *-*
 
+import logger
+
 timeEffects = []
 
 class Effect(object):
@@ -28,11 +30,12 @@ class VolumeEffect(Effect):
     """Implements a fade volume effect, either fade in or fade out."""
     expected = None
 
-    def __init__(self, sound, expected, stepValue=0.005):
+    def __init__(self, sound, expected, stepValue=0.001):
         super().__init__(sound, stepValue)
         self.expected = expected
         self.curVolume = self.sound.channel.volume
         self.stepValue = stepValue
+        logger.info(self, "{snd}: {cur} -> {new}".format(snd=self.sound.getLogName(), cur=self.curVolume, new=expected))
         if self.curVolume > self.expected:
             self.stepValue = -self.stepValue
     def isCompleted(self):
