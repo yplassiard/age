@@ -6,10 +6,15 @@ import logger
 from . import effects
 import os
 
+
+
+_channels = []
+
 class Sound(object):
     name = None
     snd = None
     channel = None
+    playing = False
 
     def __init__(self, fmod, name, file, volume=constants.AUDIO_FX_VOLUME, loop=False, _isMusic=False):
         super().__init__()
@@ -24,9 +29,14 @@ class Sound(object):
         self.file = file
         self.volume = volume
         self.channel = None
+        self._isMusic = _isMusic
         
         try:
-            self.snd = self.fmod.create_sound(os.path.join("data", dir, self.file))
+            if self._isMusic is False:
+                self.snd = self.fmod.create_sound(os.path.join("data", dir, self.file))
+            else:
+                from .pyfmodex import flags
+                self.snd = self.fmod.create_stream(os.path.join("data", dir, self.file), flags.MODE.TWOD | flags.MODE.LOOP_NORMAL)
         except Exception as e:
             logger.exception(self, "Unable to load soune: {e}".format(e=e), e)
             self.snd = None
@@ -34,7 +44,8 @@ class Sound(object):
     def setVolume(self, volume, pan=0.0):
         """Sets the volume and sound panoramic."""
         if self.isPlaying():
-            self.channel.volume(volume)
+            self.channel.volume = volume
+            self.channel.position = [pan, 0.0, 1.0]
         else:
             logger.warning(self, "Unable to set volume on inactive sound {name}".format(name=self.name))
 
@@ -45,37 +56,46 @@ class Sound(object):
             logger.error(self, "Cannot play a not loaded sound.")
             return False
         try:
-            self.channel = self.snd.play(paused=True)
+            self.channel = self.snd.play()
+            # logger.info(self, "Sound started playing {chan}".format(chan=self.channel))
+            self.playing = True
             self.channel.position = [0.0, 1.0, 1.0]
-            self.channel.play()
         except Exception as e:
             logger.exception(self, "Error playing {name}: {e}".format(name=self.name, e=e), e)
             return False
         return True
     def pan(self, value):
-        logger.info(self, "Pan: {value}".format(value=value))
+        # logger.info(self, "Pan: {value}".format(value=value))
         if self.channel is not None:
             self.channel.position = [value, 1.0, 1.0]
     
     def stop(self):
         if self.isPlaying():
             self.channel.stop()
-            self.channel = None
+            # logger.info(self, "Stopping sound.")
+            self.playing = False
             return True
         return False
     def isPlaying(self):
         if self.channel is None:
             return False
-        ret = self.channel.is_playing
-        if ret is False:
-            self.onEnded()
-
-    def onEnded(self):
-        self.channel = None
+        try:
+            self.playing = self.channel.is_playing
+            return self.playing
+        except:
+            self.channel = None
+            self.playing = False
+            return False
+        
+    
     
 
     def getLogName(self):
         return "Sound(%s, %s)" %(self.name, self.file)
+def onChannelCB(*args):
+    from . import pyfmodex
+    logger.info('channel', "Channel callback args: {arg}".format(arg=", ".join(arg for arg in args)))
+    return pyfmodex.enums.RESULT.OK
 
 class Music(Sound):
     loops = -1
@@ -89,9 +109,9 @@ class Music(Sound):
             self.stop()
         try:
             self.channel = self.snd.play()
-            self.channel.loop_count = loops
+            self.channel.loop_count = self.loops
             if self.fadeIn:
-                self.channel.volume = 0
+                self.channel.volume = 0.0
                 effects.timeEffects.append(effects.VolumeEffect(self, self.volume))
             else:
                 self.channel.volume = self.volume

@@ -26,13 +26,13 @@ class ChannelControl(FmodObject):
     def _threed_attrs(self):
         pos = VECTOR()
         vel = VECTOR()
-        self._call_specific("Get3DAttributes", byref(pos), byref(vel))
+        self._call_specific("Get3DAttributes", byref(pos), byref(vel), c_uint(0))
         return [pos.to_list(), vel.to_list()]
     @_threed_attrs.setter
     def _threed_attrs(self, attrs):
         pos = VECTOR.from_list(attrs[0])
         vel = VECTOR.from_list(attrs[1])
-        self._call_specific("Set3DAttributes", byref(pos), byref(vel))
+        self._call_specific("Set3DAttributes", byref(pos), byref(vel), c_uint(0))
 
     @property
     def position(self):

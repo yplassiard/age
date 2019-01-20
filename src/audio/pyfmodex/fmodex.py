@@ -9,7 +9,6 @@ if os.name == 'nt':
         path = os.path.join(gameconfig.getLibraryPath(), "fmod.dll")
     else:
         path = os.path.join(gameconfig.getLibraryPath(), "fmod64.dll")
-    print(path)
     _dll = windll.LoadLibrary(path)
 elif os.name == "posix":
     if arch == "32bit":

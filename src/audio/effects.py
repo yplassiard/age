@@ -31,13 +31,13 @@ class VolumeEffect(Effect):
     def __init__(self, sound, expected, stepValue=0.005):
         super().__init__(sound, stepValue)
         self.expected = expected
-        self.curVolume = self.sound.channel.get_volume()
+        self.curVolume = self.sound.channel.volume
         self.stepValue = stepValue
         if self.curVolume > self.expected:
             self.stepValue = -self.stepValue
     def isCompleted(self):
-        if abs(self.sound.channel.get_volume() - self.expected) < 0.01:
-            self.sound.channel.set_volume(self.expected)
+        if abs(self.sound.channel.volume - self.expected) < 0.01:
+            self.sound.channel.volume = self.expected
             if self.expected == 0.0:
                 self.sound.stop()
             return True

@@ -24,6 +24,7 @@ class AudioManager(object):
     """Manages all audio resources (sfx, bgm)"""
     soundMap = {}
     musicMap = {}
+    fmod = None
 
     
     def __init__(self):
@@ -77,10 +78,16 @@ class AudioManager(object):
     def play(self, name, volume, pan=0.0):
         snd = self.soundMap.get(name, None)
         if snd is not None:
-            snd.play()
-            snd.pan(pan)
+            try:
+                snd.play()
+                snd.pan(pan)
+                return True
+            except Exception as e:
+                logger.exception(self, "Error playing {name}: {exception}".format(name=name, exception=e), e)
+                return False
         else:
             logger.error(self, "Sound {name} is not loaded.".format(name=name))
+            return False
 
     def stop(self, name):
         snd = self.soundMap.get(name, None)
@@ -132,15 +139,19 @@ class AudioManager(object):
             if isinstance(effect, effects.VolumeEffect):
                 # logger.info(self, "Adjusting {name}(volume={volume}, step={step})".format(name=effect.name, volume=effect.curVolume, step=effect.stepValue))
                 effect.curVolume += effect.stepValue
-                effect.sound.channel.set_volume(effect.curVolume)
+                effect.sound.channel.volume = effect.curVolume
                 if effect.isCompleted():
                     logger.info(self, "Effect {e} completed".format(e=effect))
                     effects.timeEffects.remove(effect)
                     continue
                 effect._lastTick = now
-    
-        self.fmod.update()
-        
+        if self.fmod is not None:
+            try:
+                self.fmod.update()
+            except Exception as e:
+                logger.exception(self, "Error updating fMOD: {e}".format(e=e), e)
+                
+                
 def initialize():
     if _instance is None:
         try:
@@ -150,7 +161,7 @@ def initialize():
             logger.exception("audio", "Error initializing audio: {exception}".format(exception=e), e)
             return False
 
-def play(name, volume=constants.AUDIO_FX_VOLUME, pan=(1.0, 1.0)):
+def play(name, volume=constants.AUDIO_FX_VOLUME, pan=0.0):
     global _instance
 
     _instance.play(name, volume, pan)
@@ -178,8 +189,8 @@ def computePan(minValue, maxValue, currentValue):
         ret = -(1.0 - x)
     elif x > 1.0:
         ret = x - 1.0
-    if ret < -0.9:
-        ret = -0.9
-    elif ret > 0.9:
-        ret = 0.9
+    if ret < -0.95:
+        ret = -0.95
+    elif ret > 0.95:
+        ret = 0.95
     return ret
