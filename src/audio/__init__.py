@@ -149,7 +149,35 @@ class AudioManager(object):
                     effects.timeEffects.append(effects.VolumeEffect(self.musicMap[music], newVolume))
                 
         return
+
+    def event_stack_scene(self, evt):
+        scene = evt.get("scene", None)
+        sceneMusics = scene.getSceneMusics()
+        if sceneMusics is None or len(sceneMusics) == 0:
+            return
+        for music in sceneMusics:
+            snd = self.musicMap.get(music["name"], None)
+            if snd is None:
+                logger.error(self, "stack({name}): Music {music} not found.".format(name=scene.name, music=music["name"]))
+                continue
+            snd.play()
+    def event_unstack_scene(self, evt):
+        scene = evt.get("scene", None)
+        active = evt.get("active", None)
+        if active  is None:
+            activeMusics = []
+        else:
+            activeMusics = active.getMusics()
+        if scene is None:
+            logger.error(self, "unstack(): No scene specified.")
+            return
+        return
     
+    
+            
+            
+        
+        
     def event_scene_interval_tick(self, event):
         now = event.get("time", 0)
         if len(effects.timeEffects) == 0:

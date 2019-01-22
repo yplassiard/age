@@ -10,6 +10,7 @@ import speech
 import logger
 import audio
 import eventManager
+import objectManager
 import sceneManager
 
 
@@ -49,6 +50,9 @@ def main():
     if sceneManager.initialize() is False:
         logger.error("main", "Unable to initialize scenes.")
         print("Unable to initialize scenes: Check the logfile for more details.")
+        return
+    if objectManager.initialize() is False:
+        logger.error("main", "Failed to initialize object manager.")
         return
     
     pygame.init()

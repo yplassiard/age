@@ -6,7 +6,7 @@ import gameconfig
 
 
 class Object(object):
-    """Bse class for all objects present within the game."""
+    """Base class for all objects present within the game."""
     name = None
     position = None
 
@@ -21,6 +21,9 @@ class Object(object):
     def getType(self):
         raise NotImplementedError
 
+    def getPosition(self):
+        return self.position
+    
     def use(self, target):
         raise NotImplementedError
     
@@ -31,10 +34,10 @@ class Seizable(Object):
 
     def __init__(self, name, config):
         super().__init__(name, config)
-        self.quantity = config.get("quantity", 1)
-        if isinstance(self.quantity, int) is False:
-            raise RuntimeError("The \"quantity\" property has to be an integer.")
-    def use(self):
+        self.quantity = gameconfig.getValue(config, "quantity", int, {"defaultValue": 1,
+                                                                      "minValue": 1})
+        
+    def use(self, target):
         """Called when this object is used on another object."""
         return False
 
@@ -43,20 +46,24 @@ class Openable(Object):
     """This object can be opened (like doors or chests)"""
     def __init__(self, name, config):
         super().__init__(name, config)
-        self.locked = config.get('locked', False)
+        self.locked = gameconfig.getValue(config, 'locked', bool, {"defaultValue": False})
         if self.locked:
             self.lockState = constants.LOCKSTATE_LOCKED
         else:
             self.lockState = constants.LOCKSTATE_UNLOCKED
-        self.unlockers = config.get("unlockers", [])
-        if isinstance(self.unlockers, list) is False:
-            raise RuntimeError("\"unlockers\" property has to be a list")
+        self.unlockers = gameconfig.getValue(config, "unlockers", list, {"defaultValue": [],
+                                                                         "elements": 1})
+
         
     def unlock(self, obj):
         if self.lockState == consta@ts.LOCKsTATE_LOCKED:
             return True
-        for unlocker in self.unlockers:
-            if unlocker.name == obj.name and issubclass(unlocker, Key):
+        for unlockerStr in self.unlockers:
+            import objectManager
+
+            unlocker = objectManager.getObject(unlockerStr)
+            
+            if unlocker is not None and unlocker.name == obj.name and issubclass(unlocker, Key):
                 self.lockState = constants.LOCKSTATE_UNLOCKED
                 audio.play(self.unlockSound, self.unlockSoundVolume)
                 return True
@@ -65,20 +72,20 @@ class Openable(Object):
     def use(self):
         pass
 
-class Container(Openable):
+class Chest(Openable):
     """This contains one item."""
     item = None
     opened = False
 
     def __init__(self, name, config):
         super().__init__(name, config)
-        self.item = config.get("item", None)
+        self.item = gameconfig.get(config, "item", str, {"defaultValue": None})
         self.openSound = config.get("open-sound", gameconfig.getContainerOpenSound())
         self.openSoundVolume = comfig.get("open-sound-volume", gameconfig.getContainerOpenSoundVolume())
         
     def open(self):
-        if not self.opened:
-            return False
+        if self.opened:
+            return True
         if self.getLockState() == constants.LOCKSTATE_LOCKED:
             return False
         self.opened = True
@@ -87,11 +94,16 @@ class Container(Openable):
 
     def getItem(self):
         if self.opened:
-            return self.items.pop()
+            i = self.item
+            self.item = None
+            return i
         return None
     
     def putItem(self, item):
-        self.items.append(item)
+        if self.item is not None:
+            return False
+        self.item = item
+
     def close(self):
         if self.opened:
             self.opened = False
@@ -102,7 +114,7 @@ class Key(Seizable):
     
     def __init__(self, name, config):
         super().__init__(name, config)
-        self.target = config.get("target", None)
+        self.target = gameconfig.getValue(config, "target", str, {"defaultValue": None})
         if self.target is None:
             raise RuntimeError("Key({name}) without any target to unlock.".format(name=name))
     
@@ -110,7 +122,7 @@ class Key(Seizable):
         if target != self.target:
             return False
         import objectManager
-        obj = objectManager.get(self.target)
+        obj = objectManager.getObject(self.target)
         if obj is None:
             logger.error(self, "Target {target} not found".format(target=self.target))
             return False
@@ -124,3 +136,34 @@ class Key(Seizable):
         return ret
     
             
+
+class NonPlayableCharacter(Object):
+    """This isa non-playable character. It will instanciate a StoryText scene when talking to him,
+i.e when using this object."""
+    storyScene = None
+
+    def __init__(self, name, config):
+        super().__init__(name, config)
+        scene = gameconfig.getValue(config, "scene", str, {"defaultValue": None})
+        if scene is None:
+            raise RuntimeError(self, "No story scene configured for this NPC.")
+        import sceneManager
+        if sceneManager.sceneExists(scene) is False:
+            logger.error(self, "{scene} not found.".format(scene=scene))
+            raise RuntimeError("Invalid NPC configuration: Scene not found")
+        self.storyScene = scene
+    def use(self, target):
+        if self.storyScene is not None:
+            import sceneManager
+            sceneManager.stackScene(self.storyScene)
+
+            
+class Enemy(Object):
+    """Defines an opponent that can move and attack the player."""
+    health = 100
+
+    def __init__(self, name, config):
+        super().__init__(name, config)
+        self.health = gameconfig.getValue(config, "health", int, {"minValue": 1,
+                                                                  "defaultValue": constants.ENEMY_DEFAULT_HEALTH})
+

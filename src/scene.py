@@ -328,7 +328,7 @@ A region is represented as a rectangle.
         self.height = gameconfig.getValue(config, "height", int, {"minValue": 1})
         self.width = gameconfig.getValue(config, "width", int, {"minValue": 1})
         self.regionLinks = gameconfig.getValue(config, "region-links", list, {"elements": 1})
-        self.objects = gameconfig.getValue(config, "objects", list, {"mandatory": True})
+        self.objects = gameconfig.getValue(config, "objects", list, {"defaultValue": []})
         if self.objects is None:
             self.objects = []
         
@@ -338,12 +338,38 @@ A region is represented as a rectangle.
     def getLogName(self):
         return "MapRegionScene(%s)" % self.name
 
+    def loadObjects(self):
+        import objectManager
+        ret = True
+        for objConfig in self.objects:
+            if objectManager.addObject(objConfig) is False:
+                ret = False
+                continue
+            obj = objectManager.getObject(objConfig["name"])
+            if obj is None:
+                continue
+            objPos = obj.getPosition()
+            if objPos is None or isinstance(objPos, list) is False or len(objPos) != 2:
+                logger.error(self, "Object({name}) has no position".format(name=obj.name))
+                continue
+            if objPos[0] <= 0 or objPos[0] >= self.width or objPos[1] <= 0 or objPos[1] >= self.height:
+                logger.error(self, "Object({name}, {pos}) position is outside this scene.".format(name=obj.name, pos=objPos))
+                continue
+            logger.info(self, "{cls}({name}) added to the scene".format(cls=obj.__class__.__name__, name=obj.name))
+        if ret is False:
+            logger.error(self, "Some objects failed to load.")
+        return ret
+    
+            
     def activate(self, silent=False, params=None):
         super().activate(silent, params)
         self.heroPosition = None
         self.sceneTicks = 0
         self.isWalking = False
         self.isRunning = False
+        if self.loadObjects() is False:
+            logger.warning(self, "Some objects failed to load")
+        
         if params is not None:
             enter = params.get('enter', None)
             if enter is not None:

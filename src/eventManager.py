@@ -18,6 +18,9 @@ LEAVE_CURRENT_SCENE = 12
 SCENE_INTERVAL_ACTIVATE = 13
 SCENE_INTERVAL_DEACTIVATE = 14
 SCENE_INTERVAL_TICK = 15
+SCENE_STACK = 16
+SCENE_UNSTACK = 17
+
 # hero specific events
 HERO_SPAWN = 50
 HERO_WALK_START = 51
@@ -48,6 +51,8 @@ eventNames = {
     SCENE_INTERVAL_ACTIVATE: "scene_interval_activate",
     SCENE_INTERVAL_DEACTIVATE: "scene_interval_deactivate",
     SCENE_INTERVAL_TICK: "scene_interval_tick",
+    SCENE_STACK: "scene_stack",
+    SCENE_UNSTACK: "scene_unstack",
     QUIT_GAME: "quit_game",
     PAUSE_GAME: "pause_game",
 

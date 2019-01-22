@@ -26,7 +26,15 @@
               "link": "forest_c4.north",
               "position": [12, 0, 18, 0]
              }
+         ],
+         "objects": [
+             {"name": "NPC 1",
+              "type": "npc",
+              "position": [10, 15],
+              "scene": "npc1"
+             }
          ]
+             
         },
         {"name": "forest_c2",
          "type": "mapregion",
@@ -39,6 +47,7 @@
               "volume": 0.8
              }
          ],
+         "walking": ["forest-step1", "forest-step2", "forest-step3", "forest-step4"],
          "region-links": [
              {"name": "south",
               "link": "forest_c3.north",
@@ -50,12 +59,30 @@
          "type": "mapregion",
          "height": 30,
          "width": 30,
+         "musics": [
+             {"name": "ambiant-forest",
+              "file": "forest-ambiance.ogg",
+              "loops": -1,
+              "volume": 0.8
+             }
+         ],
+         "walking": ["forest-step1", "forest-step2", "forest-step3", "forest-step4"],
          "region-links": [
              {"name": "north",
               "link": "forest_c3.south",
               "position": [12, 29, 18, 29]
              }
          ]
+        },
+        {"name": "npc1",
+         "type": "storytext",
+         "story": [
+             "Bonjour!",
+             "Hum, vous cherchez quelqu'un nommé Pixel ?",
+             "je regrette, jamais entendu parler.",
+             "Ceci dit ne vous éloignez pas trop. C.est dangereux là-dehors."
+         ],
+         "interval": 30
         }
     ]
 }

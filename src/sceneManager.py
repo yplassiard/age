@@ -28,6 +28,7 @@ class SceneManager(object):
     intervalScenes = []
     activeScene = None
     player = None
+    stack = []
 
     def __init__(self):
         eventManager.addListener(self)
@@ -81,7 +82,30 @@ class SceneManager(object):
         self.activeScene = s
         s.activate(silentEntering, params)
 
+    def sceneExists(self, name):
+        return True if self.scenes.get(name, None) is not None else False
+
+    def stackScene(self, name):
+        s = self.scenes.get(name, None)
+        if s is None:
+            return False
+        if s.name == self.activeScene.name or (len(self.stack) >= 1 and self.stack[-1].name == name):
+            logger.error(self, "Cannot stack {name} on top of itself".format(name=s.name))
+            return False
+        eventManager.post(eventManager.SCENE_STACK, {"scene": s})
+
+    
+        
+        
     def leave(self, silentLeaving=False, params=None):
+        if len(self.stack) > 0:
+            s = self.stack[-1]
+            if len(self.stack) > 2:
+                active = self.stack[-2]
+            else:
+                active = self.activeScene
+            eventManager.post(eventManager.SCENE_UNSTACK, {"scene": s, "active": active})
+            return
         if self.activeScene is not None:
             nextScene = self.activeScene.getNextScene()
             if nextScene is None:
@@ -93,6 +117,8 @@ class SceneManager(object):
                     speech.speak("scene {name} not created yet.".format(name=nextScene))
                     
     def getActiveScene(self):
+        if len(self.stack) > 0:
+            return self.stack[-1]
         return self.activeScene
 
     def getPlayer(self):
@@ -118,6 +144,22 @@ class SceneManager(object):
     def event_leave_current_scene(self, event):
         self.leave(params=event["params"])
 
+    def event_scene_stack(self, event):
+        scene = event.get('scene', None)
+        if scene is None:
+            logger.error(self, "Stacking an empty object is not allowed")
+            return False
+        self.stack.push(scene)
+        scene.activate()
+
+    def event_scene_unstack(self, evt):
+        scene = evt.get("scene", None)
+        if scene is None:
+            logger.error(self, "Unstacking an empty object is not allowed.")
+            return False
+        scene.deactivate()
+        self.stack.erase(scene)
+    
     def event_scene_interval_activate(self, event):
         scene = event.get('scene', None)
         if scene is None:
@@ -159,7 +201,10 @@ class SceneManager(object):
     
     def execute(self, script, data=None, target=None):
         if target is None:
-            objList = [self, self.activeScene]
+            objList = [self]
+            if len(self.stack) > 0:
+                objList.append(self.stack[-1])
+            objList.append(self.activeScene)
         else:
             objList = [target]
         for obj in objList:
@@ -264,6 +309,21 @@ def loadScene(name):
     global _instance
 
     return _instance.load(name)
+
+def sceneExists(name):
+    global _instance
+
+    return _instance.sceneExists(name)
+
+def stackScene(name):
+    global _instance
+
+    return _instance.stackScene(name)
+
+def unstackScene(name):
+    global _instance
+
+    return _instance.unstackScene(name)
 
 def leaveCurrentScene(params=None):
     global _instance
