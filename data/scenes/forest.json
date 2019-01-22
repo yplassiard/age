@@ -10,7 +10,7 @@
               "loops": -1
              },
              {"name": "forest-music",
-              "file": "testmusic.mp3",
+              "file": "forest-music.ogg",
               "loops": -1,
               "volume": 0.3
              }
@@ -34,7 +34,7 @@
          "width": 30,
          "musics": [
              {"name": "forest-music",
-              "file": "testmusic.mp3",
+              "file": "forest-music.ogg",
               "loops": -1,
               "volume": 0.8
              }

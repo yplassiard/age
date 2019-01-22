@@ -40,6 +40,11 @@ class Scene(object):
                     logger.warning(self, "Music {name} not loaded".format(name=music.get("name", "unknown")))
                                    
 
+    def __str__(self):
+        return self.getLogName()
+    def getLogName(self):
+        return "Scene(%s)" % self.name
+    
     def getNextScene(self):
         raise NotImplementedError("This scene is terminal.")
     def activate(self, silent=False, params=None):
@@ -49,8 +54,7 @@ class Scene(object):
         logger.info(self, "Scene {name} activated.".format(name=self.name))
         if silent is False and self.activateSound is not None:
             audio.play(self.activateSound)
-        for music in self.musics:
-            audio.playMusic(music["name"], fadeIn=True)
+
 
             
 
@@ -167,7 +171,8 @@ possible to implement option selection."""
 
     
     def getLogName(self):
-        return 'menu'
+        return "MenuScene(%s)" % self.name
+    
 
     def activate(self, silent=False, params=None):
         super().activate(silent)
@@ -264,7 +269,8 @@ to an integer within the scene configuration."""
 
 
     def getLogName(self):
-        return 'StoryText'
+        return "StoryTextScene(%s)" % self.name
+    
 
     def speak(self):
         speech.speak(self.story[self.idx])

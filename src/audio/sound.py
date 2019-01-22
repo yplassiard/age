@@ -4,6 +4,7 @@ import pygame
 import constants
 import logger
 from . import effects
+
 import os
 
 
@@ -15,6 +16,7 @@ class Sound(object):
     snd = None
     channel = None
     playing = False
+    initialVolume = constants.AUDIO_FX_VOLUME
 
     def __init__(self, fmod, name, file, volume=constants.AUDIO_FX_VOLUME, loop=False, _isMusic=False):
         super().__init__()
@@ -27,7 +29,7 @@ class Sound(object):
             dir = 'musics'
         self.name = name
         self.file = file
-        self.volume = volume
+        self.initialVolume = volume
         self.channel = None
         self._isMusic = _isMusic
         
@@ -53,6 +55,16 @@ class Sound(object):
             return self.channel.volume
         return None
 
+    def getInitialVolume(self):
+        """Returns the initial volume of the sound."""
+        return self.initialVolume
+
+    def setInitialVolume(self, volume):
+        """Sets the initial sound volume before applying any volume effect."""
+        self.initialVolume = volume
+        if self.isPlaying():
+            self.channel.volume = self.initialVolume
+    
     def play(self):
         if self.isPlaying():
             self.stop()
@@ -103,10 +115,9 @@ def onChannelCB(*args):
 
 class Music(Sound):
     loops = -1
-    def __init__(self, fmod, name, file, volume=constants.AUDIO_MUSIC_VOLUME, fadeIn=True, loops=-1, snd=None):
+    def __init__(self, fmod, name, file, volume=constants.AUDIO_MUSIC_VOLUME, loops=-1, snd=None):
         super().__init__(fmod, name, file, volume, snd, _isMusic=True)
         self.loops = loops
-        self.fadeIn = fadeIn
 
     def play(self):
         if self.isPlaying():
@@ -114,11 +125,7 @@ class Music(Sound):
         try:
             self.channel = self.snd.play()
             self.channel.loop_count = self.loops
-            if self.fadeIn:
-                self.channel.volume = 0.0
-                effects.timeEffects.append(effects.VolumeEffect(self, self.volume))
-            else:
-                self.channel.volume = self.volume
+            self.channel.volume = self.initialVolume
             self.playing = True
         except Exception as e:
             logger.error(self, "Failed to play: {e}".format(e=e))

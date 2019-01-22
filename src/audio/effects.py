@@ -30,7 +30,7 @@ class VolumeEffect(Effect):
     """Implements a fade volume effect, either fade in or fade out."""
     expected = None
 
-    def __init__(self, sound, expected, stepValue=0.001):
+    def __init__(self, sound, expected, stepValue=0.01):
         super().__init__(sound, stepValue)
         self.expected = expected
         self.curVolume = self.sound.channel.volume

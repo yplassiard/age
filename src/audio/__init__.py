@@ -56,9 +56,9 @@ class AudioManager(object):
         name = gameconfig.getValue(config, "name", str)
         file = gameconfig.getValue(config, "file", str)
         loop = gameconfig.getValue(config, "loops", int, {"defaultValue": -1})
-        volume = gameconfig.getValue(config, "volume", float, {"minValue": 0.0,
+        volume = gameconfig.getValue(config, "initial-volume", float, {"minValue": 0.0,
                                                                "maxValue": 1.0,
-                                                               "defaultValue": constants.AUDIO_MUSIC_VOLUME})
+                                                               "defaultValue": 0.0})
         
         if loop is None:
             loop = -1
@@ -69,7 +69,7 @@ class AudioManager(object):
             return True
         try:
             logger.info(self, "Loading music {name} ({file}, {volume})".format(name=name, file=file, volume=volume))
-            snd = sound.Music(self.fmod, name, file, loops=loop, volume=volume, fadeIn=True)
+            snd = sound.Music(self.fmod, name, file, loops=loop, volume=volume)
         except Exception as e:
             logger.error(self, "Cannot load music {name} ({file}): {exception}".format(name=name, file=file, exception=e))
             return False
@@ -81,6 +81,7 @@ class AudioManager(object):
         if snd is not None:
             try:
                 snd.play()
+                snd.setVolume(volume)
                 snd.pan(pan)
                 return True
             except Exception as e:
@@ -95,12 +96,11 @@ class AudioManager(object):
         if snd is not None and snd.isPlaying():
             snd.stop()
 
-    def playMusic(self, name, fadeIn=True):
+    def playMusic(self, name):
         music = self.musicMap.get(name, None)
         if music is None:
             logger.error(self, "Music {name} not loaded".format(name=name))
             return False
-        music.setFadeIn(fadeIn)
         music.play()
 
     def stopMusic(self, name):
@@ -126,16 +126,26 @@ class AudioManager(object):
             nextSceneMusic = nextScene.getMusics()
         for music in self.musicMap:
             found = False
+            musicConfig = None
             for m in nextSceneMusic:
                 if m["name"] == music:
                     found = True
-                    
+                    musicConfig = m
+            snd = self.musicMap[music]        
             if not found:
-                logger.info(self, "stopping {music}".format(music=music))
-                self.musicMap[music].stop(fadeOut=True)
+                if snd.isPlaying():
+                    logger.info(self, "stopping {music}".format(music=music))
+                    self.musicMap[music].stop(fadeOut=True)
             else:
-                newVolume = gameconfig.getValue(m, "volume", float, {"defaultValue": constants.AUDIO_FX_VOLUME})
-                if newVolume != self.musicMap[music].getVolume():
+                newVolume = gameconfig.getValue(musicConfig, "volume", float, {"defaultValue": constants.AUDIO_FX_VOLUME})
+                initialVolume = gameconfig.getValue(musicConfig, "initial-volume", float, {"defaultValue": 0.0})
+                
+                if snd.isPlaying() is False:
+                    snd.play()
+                if snd.getInitialVolume() != initialVolume:
+                    snd.setVolume(initialVolume)
+                if newVolume != snd.getVolume():
+                    logger.info(self, "Scheduling {music} to new volume {newVolume}".format(music=music, newVolume=newVolume))
                     effects.timeEffects.append(effects.VolumeEffect(self.musicMap[music], newVolume))
                 
         return
@@ -146,7 +156,7 @@ class AudioManager(object):
             core.stopAnimation()
         for effect in effects.timeEffects:
             if isinstance(effect, effects.VolumeEffect):
-                # logger.info(self, "Adjusting {name}(volume={volume}, step={step})".format(name=effect.name, volume=effect.curVolume, step=effect.stepValue))
+                # logger.info(self, "{x} Adjusting {name}(volume={volume}, step={step})".format(x=len(effects.timeEffects), name=effect.name, volume=effect.curVolume, step=effect.stepValue))
                 effect.curVolume += effect.stepValue
                 if effect.sound is None or effect.sound.channel is None:
                     effects.timeEffects.remove(effect)
@@ -178,10 +188,10 @@ def play(name, volume=constants.AUDIO_FX_VOLUME, pan=0.0):
     global _instance
 
     _instance.play(name, volume, pan)
-def playMusic(name, fadeIn=True):
+def playMusic(name):
     global _instance
 
-    _instance.playMusic(name, fadeIn)
+    _instance.playMusic(name)
 
 
 def loadMusic(config):
