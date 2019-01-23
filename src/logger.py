@@ -32,7 +32,10 @@ class Logger(object):
         if isinstance(system, str):
             systemName = system
         else:
-            systemName = system.getLogName()
+            try:
+                systemName = system.getLogName()
+            except:
+                systemName = system.__class__.__name__
         try:
             self.logIO.write(bytes("{ticks} {system} {category}: {message}\r\n".format(ticks=pygame.time.get_ticks() - self.ticks, system=systemName, category=category, message=message), 'utf-8'))
             # self.logIO.flush()

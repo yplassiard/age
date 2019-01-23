@@ -10,6 +10,9 @@ class SpeechSupport(object):
 
     def cancelSpeech(self):
         raise NotImplementedError
+    def terminate(self):
+        pass
+    
 
 
     def isActive(self):
@@ -55,3 +58,8 @@ def cancelSpeech():
     
     if _instance is not None:
         _instance.cancelSpeech()
+def terminate():
+    global _instance
+
+    if _instance is not None:
+        _instance.terminate()
