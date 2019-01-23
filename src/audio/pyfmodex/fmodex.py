@@ -3,6 +3,7 @@ import os, platform
 import gameconfig
 
 _dll = None
+system = platform.system().lower()
 arch = platform.architecture()[0]
 if os.name == 'nt':
     if arch == "32bit":
@@ -10,11 +11,11 @@ if os.name == 'nt':
     else:
         path = os.path.join(gameconfig.getLibraryPath(), "fmod64.dll")
     _dll = windll.LoadLibrary(path)
-elif os.name == "posix":
-    if arch == "32bit":
-        _dll = CDLL('libfmod.so')
-    else:
-        _dll = CDLL('libfmod64.so')
+elif system == "darwin":
+    path = os.path.join(gameconfig.getLibraryPath(), "libfmod.dylib")
+    _dll = CDLL(path)
+else:
+    raise RuntimeError("System {platform} {arch} not yet supported".format(platform=os.name, arch=arch))
 
 from . import globalvars
 globalvars.dll = _dll

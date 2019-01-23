@@ -1,4 +1,5 @@
 # *-* coding: utf8 *-*
+import time
 
 import pygame
 import constants
@@ -57,8 +58,8 @@ def main():
     
     pygame.init()
     vi = pygame.display.Info()
-    screen = pygame.display.set_mode((vi.current_w, vi.current_h))
-    pygame.display.set_caption("AA Engine 1.0")
+    screen = pygame.display.set_mode((vi.current_w, vi.current_h), pygame.FULLSCREEN)
+    pygame.display.set_caption("A3 Game Engine 1.0")
     background = pygame.Surface(screen.get_size())
     background = background.convert()
     background.fill((0, 0, 0))
@@ -73,17 +74,13 @@ def main():
     oldTime = 0
     clock = pygame.time.Clock()
     
-    exposed = False
+    if sceneManager.loadScene(gameconfig.getStartScene()) is False:
+        print("Failed to load first scene {name}".format(name=gameconfig.getStartScene()))
+        return
+    stopAnimation()
     while 1:
         event = pygame.event.poll()
-        if event.type == pygame.VIDEOEXPOSE and exposed is False:
-            if sceneManager.loadScene(gameconfig.getStartScene()) is False:
-                print("Failed to load first scene {name}".format(name=gameconfig.getStartScene()))
-                return
-            else:
-                exposed = True
-                stopAnimation()
-        elif event.type == QUIT:
+        if event.type == QUIT:
             return
         elif event.type == pygame.KEYDOWN and isInAnimation() is False:
             sceneManager.onKeyDown(event.key, event.mod)
