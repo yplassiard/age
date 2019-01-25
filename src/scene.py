@@ -9,6 +9,7 @@ import logger
 import audio
 import gameconfig
 
+import math
 
 class Scene(object):
     """Defines a scene representing a particular in-game behavior."""
@@ -40,10 +41,10 @@ class Scene(object):
                     logger.warning(self, "Music {name} not loaded".format(name=music.get("name", "unknown")))
                                    
 
-    def __str__(self):
+    def __repr__(self):
         return self.getLogName()
     def getLogName(self):
-        return "Scene(%s)" % self.name
+        return "%s(%s)" % %(self.__class__.__name__, self.name)
     
     def getNextScene(self):
         raise NotImplementedError("This scene is terminal.")
@@ -314,7 +315,7 @@ A region is represented as a rectangle.
     height = 0
     width = 0
     regionLinks = None
-    heroPosition = None
+    playerPosition = None
     walkSounds = []
     runSounds = []
     isWalking = False
@@ -324,16 +325,14 @@ A region is represented as a rectangle.
         config["interval"] = 40
         super().__init__(name, config)
         import sceneManager
-        self.hero = sceneManager.getPlayer()
+        self.player = sceneManager.getPlayer()
         self.height = gameconfig.getValue(config, "height", int, {"minValue": 1})
         self.width = gameconfig.getValue(config, "width", int, {"minValue": 1})
         self.regionLinks = gameconfig.getValue(config, "region-links", list, {"elements": 1})
-        self.objects = gameconfig.getValue(config, "objects", list, {"defaultValue": []})
-        if self.objects is None:
-            self.objects = []
-        
+        self.objectConfigs = gameconfig.getValue(config, "objects", list, {"defaultValue": []})
 
         self.walkSounds = gameconfig.getValue(config, "walking", list, {"elements": 1, "defaultValue": []})
+        self.objects = []
         
     def getLogName(self):
         return "MapRegionScene(%s)" % self.name
@@ -341,11 +340,11 @@ A region is represented as a rectangle.
     def loadObjects(self):
         import objectManager
         ret = True
-        for objConfig in self.objects:
-            if objectManager.addObject(objConfig) is False:
+        for objConfig in self.objectConfigs:
+            obj = objectManager.addObject(objConfig)
+            if obj is False:
                 ret = False
                 continue
-            obj = objectManager.getObject(objConfig["name"])
             if obj is None:
                 continue
             objPos = obj.getPosition()
@@ -356,6 +355,7 @@ A region is represented as a rectangle.
                 logger.error(self, "Object({name}, {pos}) position is outside this scene.".format(name=obj.name, pos=objPos))
                 continue
             logger.info(self, "{cls}({name}) added to the scene".format(cls=obj.__class__.__name__, name=obj.name))
+            self.objects.append(obj)
         if ret is False:
             logger.error(self, "Some objects failed to load.")
         return ret
@@ -363,7 +363,7 @@ A region is represented as a rectangle.
             
     def activate(self, silent=False, params=None):
         super().activate(silent, params)
-        self.heroPosition = None
+        self.playerPosition = None
         self.sceneTicks = 0
         self.isWalking = False
         self.isRunning = False
@@ -378,21 +378,21 @@ A region is represented as a rectangle.
                         pos = gameconfig.getValue(region, "position", list, {"elements": 4})
                         speech.speak("Endering {name} {enter}: {pos}".format(name=self.name, enter=enter, pos=pos))
                         if pos[0] == pos[2]:
-                            self.heroPosition = [pos[0] + 1 if pos[0] == 0 else self.width - 2, pos[1] + int((pos[3] - pos[1]) / 2)]
+                            self.playerPosition = [pos[0] + 1 if pos[0] == 0 else self.width - 2, pos[1] + int((pos[3] - pos[1]) / 2)]
                         elif pos[1] == pos[3]:
-                            self.heroPosition = [pos[0] + int((pos[2] - pos[0]) / 2), pos[1] + 1 if pos[1] == 0 else self.height - 2]
+                            self.playerPosition = [pos[0] + int((pos[2] - pos[0]) / 2), pos[1] + 1 if pos[1] == 0 else self.height - 2]
                         else:
-                            self.heroPosition = [int(self.width / 2), int(self.height / 2)]
-                if self.heroPosition is None:
+                            self.playerPosition = [int(self.width / 2), int(self.height / 2)]
+                if self.playerPosition is None:
                     logger.error(self, "Entering scene with unknown position")
-                    self.heroPosition = [int(self.width / 2), int(self.height / 2)]
+                    self.playerPosition = [int(self.width / 2), int(self.height / 2)]
             else:
                 logger.info(self, "No enter specified, spawning in the middle.")
-                self.heroPosition = [int(self.width / 2), int(self.height / 2)]
+                self.playerPosition = [int(self.width / 2), int(self.height / 2)]
         else:
             logger.info(self, "No params specified, spawning in the middle.")
-            self.heroPosition = [int(self.width / 2), int(self.height / 2)]
-        eventManager.post(eventManager.HERO_SPAWN, {"scene": self, "position": self.heroPosition})
+            self.playerPosition = [int(self.width / 2), int(self.height / 2)]
+        eventManager.post(eventManager.HERO_SPAWN, {"scene": self, "position": self.playerPosition})
 
     def input_press_up(self):
         self.direction = constants.DIRECTION_NORTH
@@ -456,7 +456,7 @@ A region is represented as a rectangle.
         if delta < constants.HERO_WALK_TIME and not running:
             return
         self.sceneTicks = core.currentTicks
-        newPos = self.heroPosition.copy()
+        newPos = self.playerPosition.copy()
         if self.direction == constants.DIRECTION_NORTH:
             newPos[1] += 1
         elif self.direction == constants.DIRECTION_SOUTH:
@@ -468,10 +468,14 @@ A region is represented as a rectangle.
 
         # now, let's see what's on this new position
 
-        for obj in self.objects:
-            if obj.comparePosition(newPos) is True:
-                self.onInteract(self.hero, obj, direction)
-                return
+        import objectManager
+        obj,distance = objectManager.getNearestObject(self.playerPosition, self.direction, self.player, self.objects)
+        if obj is not None:
+            maxValue = math.sqrt(self.height * self.height + self.width * self.width)
+            pitch = 1.0 + distance / maxValue
+            logger.info(self, "Nearest object {obj} at {distance}, maxDistance={maxDistance}, pitch={pitch}".format(obj=obj, distance=distance, maxDistance=maxValue, pitch=pitch))
+            audio.play(obj.getSignalSound(), constants.AUDIO_FX_VOLUME, audio.computePan(0, self.width, obj.position[0]), pitch=pitch)
+        
         # Second, let's see if there is a link to another region
         
         for region in self.regionLinks:
@@ -486,11 +490,11 @@ A region is represented as a rectangle.
             return # this is a wall
         # If we reach this, nothing prevents us to walk this way
         
-        self.heroPosition = newPos
+        self.playerPosition = newPos
         footStepSound = self.getGroundTypeSound()
         audio.play(footStepSound[0], footStepSound[1], audio.computePan(0, self.width, newPos[0]))
         
-        eventManager.post(eventManager.HERO_WALK_START, {"position": self.heroPosition, "scene": self})
+        eventManager.post(eventManager.HERO_WALK_START, {"position": self.playerPosition, "scene": self})
         if self.isRunning is False and running is True:
             self.isRunning = True
         elif self.isRunning is False:

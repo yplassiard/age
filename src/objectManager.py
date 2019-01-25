@@ -1,7 +1,7 @@
-
 # *-* coding: utf8 *-*
 
 from objects import *
+import math
 
 objectsMap = {
     "key": Key,
@@ -41,7 +41,7 @@ class ObjectManager(object):
             logger.error(self, "Error instanciating {cls}({name}): {exception}".format(cls=cls.__name__, name=name, exception=e))
             return False
         self.objects[name] = o
-        return True
+        return o
 
     def get(self, name):
         o = self.objects.get(name, None)
@@ -52,6 +52,25 @@ class ObjectManager(object):
     def getLogName(self):
         return 'ObjectManager'
 
+    def getNearestObject(self, position, direction, player, objectsList):
+        lastDistance = None
+        nearest = None
+        if len(objectsList) == 0:
+            objectsList = self.objects
+        for value in objectsList:
+            obj = self.objects[value] if isinstance(value, str) else value
+            distance = math.sqrt(((obj.position[0] - position[0]) * (obj.position[0] - position[0]))\
+                                 + ((obj.position[1] - position[1]) * (obj.position[1] - position[1])))
+            
+            if lastDistance is None:
+                lastDistance = distance
+                nearest = obj
+                continue
+            if lastDistance is not None and abs(lastDistance) > abs(distance):
+                lastDistance = distance
+                nearest = obj
+        return (nearest, distance)
+    
 def initialize():
     global _instance
 
@@ -81,3 +100,9 @@ def getObject(name):
     else:
         return None
     
+def getNearestObject(position, direction, player, objectsList=[]):
+    global _instance
+
+    if _instance is not None:
+        return _instance.getNearestObject(position, direction, player, objectsList)
+    return (None,None)

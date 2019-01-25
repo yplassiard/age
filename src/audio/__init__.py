@@ -76,13 +76,14 @@ class AudioManager(object):
         self.musicMap[name] = snd
         return True
     
-    def play(self, name, volume, pan=0.0):
+    def play(self, name, volume, pan=0.0, pitch=1.0):
         snd = self.soundMap.get(name, None)
         if snd is not None:
             try:
                 snd.play()
                 snd.setVolume(volume)
                 snd.pan(pan)
+                snd.setPitch(pitch)
                 return True
             except Exception as e:
                 logger.exception(self, "Error playing {name}: {exception}".format(name=name, exception=e), e)
@@ -212,10 +213,10 @@ def initialize():
             logger.exception("audio", "Error initializing audio: {exception}".format(exception=e), e)
             return False
 
-def play(name, volume=constants.AUDIO_FX_VOLUME, pan=0.0):
+def play(name, volume=constants.AUDIO_FX_VOLUME, pan=0.0, pitch=1.0):
     global _instance
 
-    _instance.play(name, volume, pan)
+    _instance.play(name, volume, pan, pitch=pitch)
 def playMusic(name):
     global _instance
 
@@ -231,6 +232,7 @@ def stopMusic(name):
     global _instance
 
     _instance.stopMusic(name)
+
 
 def computePan(minValue, maxValue, currentValue):
     step = maxValue - minValue
