@@ -9,20 +9,30 @@ class Object(object):
     """Base class for all objects present within the game."""
     name = None
     position = None
+    signalSound = None
+    
 
     def __init__(self, name, config):
         self.name = name
         self.logName = "Object(%s)" %(self.name)
         self.position = gameconfig.getValue(config, "position", list, {"elements": 2})
+        self.signalSound = "signal-sound"
+        
         
         
     def getLogName(self):
-        return self.logName
+        return "%s(%s)" %(self.__class__.__name__, self.name)
+    def __repr__(self):
+        return self.getLogName()
+    
     def getType(self):
         raise NotImplementedError
 
     def getPosition(self):
         return self.position
+
+    def getSignalSound(self):
+        return self.signalSound
     
     def use(self, target):
         raise NotImplementedError
@@ -81,7 +91,8 @@ class Chest(Openable):
         super().__init__(name, config)
         self.item = gameconfig.get(config, "item", str, {"defaultValue": None})
         self.openSound = config.get("open-sound", gameconfig.getContainerOpenSound())
-        self.openSoundVolume = comfig.get("open-sound-volume", gameconfig.getContainerOpenSoundVolume())
+        self.openSoundVolume = config.get("open-sound-volume", gameconfig.getContainerOpenSoundVolume())
+        self.signalSound = "chest-signal-sound"
         
     def open(self):
         if self.opened:
@@ -117,7 +128,8 @@ class Key(Seizable):
         self.target = gameconfig.getValue(config, "target", str, {"defaultValue": None})
         if self.target is None:
             raise RuntimeError("Key({name}) without any target to unlock.".format(name=name))
-    
+        self.signalSound = "key-signal-sound"
+
     def use(self, target):
         if target != self.target:
             return False
@@ -152,6 +164,8 @@ i.e when using this object."""
             logger.error(self, "{scene} not found.".format(scene=scene))
             raise RuntimeError("Invalid NPC configuration: Scene not found")
         self.storyScene = scene
+        self.signalSound = "npc-signal-sound"
+        
     def use(self, target):
         if self.storyScene is not None:
             import sceneManager
@@ -166,4 +180,6 @@ class Enemy(Object):
         super().__init__(name, config)
         self.health = gameconfig.getValue(config, "health", int, {"minValue": 1,
                                                                   "defaultValue": constants.ENEMY_DEFAULT_HEALTH})
+        self.signalSound = "enemy-signal-sound"
+        
 

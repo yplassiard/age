@@ -64,6 +64,14 @@ class Sound(object):
         self.initialVolume = volume
         if self.isPlaying():
             self.channel.volume = self.initialVolume
+
+    def setPitch(self, pitch):
+        if self.channel is not None:
+            self.channel.pitch = pitch
+    def getPitch(self):
+        if self.channel is not None:
+            return self.channel.pitch
+        return None
     
     def play(self):
         if self.isPlaying():

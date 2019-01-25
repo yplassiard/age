@@ -30,7 +30,14 @@
             {"name": "forest-step3",
              "file": "ForestFoot3.ogg"},
             {"name": "forest-step4",
-             "file": "ForestFoot4.ogg"}],
+             "file": "ForestFoot4.ogg"},
+            {"name": "chest-signal-sound",
+             "file": "chest-signal.ogg"},
+            {"name": "key-signal-sound",
+             "file": "key-signal.ogg"},
+            {"name": "npc-signal-sound",
+             "file": "npc-signal.ogg"}
+        ],
         "music": [],
         "controls": {}
     },
