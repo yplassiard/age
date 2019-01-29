@@ -149,7 +149,7 @@ class SceneManager(object):
         if scene is None:
             logger.error(self, "Stacking an empty object is not allowed")
             return False
-        self.stack.push(scene)
+        self.stack.append(scene)
         scene.activate()
 
     def event_scene_unstack(self, evt):
@@ -158,7 +158,7 @@ class SceneManager(object):
             logger.error(self, "Unstacking an empty object is not allowed.")
             return False
         scene.deactivate()
-        self.stack.erase(scene)
+        self.stack.remove(scene)
     
     def event_scene_interval_activate(self, event):
         scene = event.get('scene', None)
@@ -177,7 +177,7 @@ class SceneManager(object):
                 self.intervalScenes.pop(idx)
                 return
             idx += 1
-            logger.error(self, "Failed to remove scene from interval scenes: {name}: {exception}".format(name=scene.name, exception=e))
+        logger.error(self, "Failed to remove scene from interval scenes: {name}".format(name=scene.name))
 
     def event_scene_interval_tick(self, evt):
         now = evt.get('time', 0)
@@ -186,7 +186,7 @@ class SceneManager(object):
                 try:
                     x.event_interval()
                 except Exception as e:
-                    logger.error(self, "Failed to execute {cls}.event_interval: {exception}".format(cls=x.__class__.__name__, exception=e))
+                    logger.exception(self, "Failed to execute {cls}.event_interval: {exception}".format(cls=x.__class__.__name__, exception=e), e)
                 x._nextTick = now + x._interval
     def onKeyDown(self, key, mod):
         action = inputHandler.action(key, mod)
@@ -204,7 +204,8 @@ class SceneManager(object):
             objList = [self]
             if len(self.stack) > 0:
                 objList.append(self.stack[-1])
-            objList.append(self.activeScene)
+            else:
+                objList.append(self.activeScene)
         else:
             objList = [target]
         for obj in objList:

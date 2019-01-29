@@ -298,7 +298,7 @@ to an integer within the scene configuration."""
             self.speak()
 
     def event_interval(self):
-        if self.charIdx == -1:
+        if self.charIdx == -1 or self.idx >= len(self.story) or self.charIdx >= len(self.story[self.idx]):
             return
         char = self.story[self.idx][self.charIdx]
         if self.canSkip is False and char not in [" ", "\n", "\r"]:
@@ -491,14 +491,18 @@ A region is represented as a rectangle.
         import objectManager
         obj,distance = objectManager.getNearestObject(self.playerPosition, self.direction, self.player, self.objects)
         if obj is not None:
-            pitch = 1.0
-            if obj.position[1] > self.playerPosition[1]:
-                pitch += 0.5
-            elif obj.position[1] < self.playerPosition[1]:
-                pitch -= 0.5
-            volume = (constants.AUDIO_FX_VOLUME - (distance / self.player.getMaxDistance()) if distance < self.player.getMaxDistance() else 0)
-            logger.info(self, "Nearest object {obj} at {distance}, pitch={pitch}".format(obj=obj, distance=distance, pitch=pitch))
-            audio.play(obj.getSignalSound(), volume, audio.computePan(0, self.width, obj.position[0]), pitch=pitch)
+            if distance <= obj.getInteractionDistance():
+                if obj.onInteract(self, self.player) is True:
+                    self.stopMoving()
+            else:
+                pitch = 1.0
+                if obj.position[1] > self.playerPosition[1]:
+                    pitch += 0.5
+                elif obj.position[1] < self.playerPosition[1]:
+                    pitch -= 0.5
+                volume = (constants.AUDIO_FX_VOLUME - (distance / self.player.getMaxDistance()) if distance < self.player.getMaxDistance() else 0)
+                logger.info(self, "Nearest object {obj} at {distance}, pitch={pitch}".format(obj=obj, distance=distance, pitch=pitch))
+                audio.play(obj.getSignalSound(), volume, audio.computePan(0, self.width, obj.position[0]), pitch=pitch)
         
         footStepSound = self.getGroundTypeSound()
         audio.play(footStepSound[0], footStepSound[1], audio.computePan(0, self.width, newPos[0]))
@@ -516,6 +520,7 @@ A region is represented as a rectangle.
 
     
 
+    
     def event_interval(self):
         if self.isWalking or self.isRunning:
             self.onWalk(self.isRunning)

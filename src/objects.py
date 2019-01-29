@@ -10,6 +10,8 @@ class Object(object):
     name = None
     position = None
     signalSound = None
+    interactDistance = -1
+    
     
 
     def __init__(self, name, config):
@@ -17,7 +19,12 @@ class Object(object):
         self.logName = "Object(%s)" %(self.name)
         self.position = gameconfig.getValue(config, "position", list, {"elements": 2})
         self.signalSound = "signal-sound"
+        self.interactDistance = gameconfig.getValue(config, "interact-distance", float, {"defaultValue": -1})
         
+
+    def getInteractionDistance(self):
+        """Automatically interact with this object if the distance is below this value"""
+        return self.interactDistance
         
         
     def getLogName(self):
@@ -150,7 +157,7 @@ class Key(Seizable):
             
 
 class NonPlayableCharacter(Object):
-    """This isa non-playable character. It will instanciate a StoryText scene when talking to him,
+    """This is a non-playable character. It will instanciate a StoryText scene when talking to him,
 i.e when using this object."""
     storyScene = None
 
@@ -165,7 +172,13 @@ i.e when using this object."""
             raise RuntimeError("Invalid NPC configuration: Scene not found")
         self.storyScene = scene
         self.signalSound = "npc-signal-sound"
-        
+        self.interactDistance = 0
+
+
+    def onInteract(self, scene, player):
+        self.use(None)
+        return True
+    
     def use(self, target):
         if self.storyScene is not None:
             import sceneManager
