@@ -40,7 +40,7 @@ class Sound(object):
                 from .pyfmodex import flags
                 self.snd = self.fmod.create_stream(os.path.join("data", dir, self.file), flags.MODE.TWOD | flags.MODE.LOOP_NORMAL)
         except Exception as e:
-            logger.exception(self, "Unable to load soune: {e}".format(e=e), e)
+            logger.error(self, "Unable to load soune: {e}".format(e=e))
             self.snd = None
             
     def setVolume(self, volume, pan=0.0):
