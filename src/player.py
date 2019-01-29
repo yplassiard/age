@@ -10,6 +10,7 @@ class Player(Object):
     health = None
     stamina = None
     magic = None
+    maxDistance = None
 
     def __init__(self, name, config):
         super().__init__(name, config)
@@ -17,6 +18,7 @@ class Player(Object):
         self.health = gameconfig.getValue(config, "health", int, {"minValue": 1})
         self.magic = gameconfig.getValue(config, "magic", int, {})
         self.stamina = gameconfig.getValue(config, "stamina", int, {"minValue": 1})
+        self.maxDistance = gameconfig.getValue(config, "max-distance", float, {"defaultValue": 5})
         self.inventory = self.loadInventory(config.get("inventory", None))
     def loadInventory(self, inventory):
         if inventory is None:
@@ -32,7 +34,13 @@ class Player(Object):
     
     
                 
-                                            
+
+    def getMaxDistance(self):
+        """Returns the maximum distance the player can ear sounds from."""
+        return self.maxDistance
+    
+    
+                   
 
     def getLogName(self):
         return "Player(%s)" % self.name

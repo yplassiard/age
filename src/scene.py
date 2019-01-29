@@ -44,7 +44,7 @@ class Scene(object):
     def __repr__(self):
         return self.getLogName()
     def getLogName(self):
-        return "%s(%s)" % %(self.__class__.__name__, self.name)
+        return "%s(%s)"  %(self.__class__.__name__, self.name)
     
     def getNextScene(self):
         raise NotImplementedError("This scene is terminal.")
@@ -281,6 +281,7 @@ to an integer within the scene configuration."""
         self.idx += 1
         self.canSkip = False
         if self.idx == len(self.story):
+            self.charIdx = -1
             leaveCurrentScene()
         else:
             self.charIdx = 0
@@ -297,7 +298,10 @@ to an integer within the scene configuration."""
             self.speak()
 
     def event_interval(self):
-        if self.canSkip is False:
+        if self.charIdx == -1:
+            return
+        char = self.story[self.idx][self.charIdx]
+        if self.canSkip is False and char not in [" ", "\n", "\r"]:
             audio.play(constants.AUDIO_MESSAGE_SOUND)
         self.charIdx += 1
         if self.charIdx == len(self.story[self.idx]):
@@ -330,7 +334,6 @@ A region is represented as a rectangle.
         self.width = gameconfig.getValue(config, "width", int, {"minValue": 1})
         self.regionLinks = gameconfig.getValue(config, "region-links", list, {"elements": 1})
         self.objectConfigs = gameconfig.getValue(config, "objects", list, {"defaultValue": []})
-
         self.walkSounds = gameconfig.getValue(config, "walking", list, {"elements": 1, "defaultValue": []})
         self.objects = []
         
@@ -421,6 +424,7 @@ A region is represented as a rectangle.
     
     def input_press_action(self):
         self.onAction()
+
     def input_press_shift_up(self):
         self.direction = constants.DIRECTION_NORTH
         self.onWalk(True)
@@ -466,17 +470,7 @@ A region is represented as a rectangle.
         elif self.direction == constants.DIRECTION_WEST:
             newPos[0] -= 1
 
-        # now, let's see what's on this new position
-
-        import objectManager
-        obj,distance = objectManager.getNearestObject(self.playerPosition, self.direction, self.player, self.objects)
-        if obj is not None:
-            maxValue = math.sqrt(self.height * self.height + self.width * self.width)
-            pitch = 1.0 + distance / maxValue
-            logger.info(self, "Nearest object {obj} at {distance}, maxDistance={maxDistance}, pitch={pitch}".format(obj=obj, distance=distance, maxDistance=maxValue, pitch=pitch))
-            audio.play(obj.getSignalSound(), constants.AUDIO_FX_VOLUME, audio.computePan(0, self.width, obj.position[0]), pitch=pitch)
-        
-        # Second, let's see if there is a link to another region
+        # let's see if there is a link to another region
         
         for region in self.regionLinks:
             pos = gameconfig.getValue(region, "position", list, {"elements": 4})
@@ -491,6 +485,21 @@ A region is represented as a rectangle.
         # If we reach this, nothing prevents us to walk this way
         
         self.playerPosition = newPos
+
+        # now, let's see what's on this new position
+
+        import objectManager
+        obj,distance = objectManager.getNearestObject(self.playerPosition, self.direction, self.player, self.objects)
+        if obj is not None:
+            pitch = 1.0
+            if obj.position[1] > self.playerPosition[1]:
+                pitch += 0.5
+            elif obj.position[1] < self.playerPosition[1]:
+                pitch -= 0.5
+            volume = (constants.AUDIO_FX_VOLUME - (distance / self.player.getMaxDistance()) if distance < self.player.getMaxDistance() else 0)
+            logger.info(self, "Nearest object {obj} at {distance}, pitch={pitch}".format(obj=obj, distance=distance, pitch=pitch))
+            audio.play(obj.getSignalSound(), volume, audio.computePan(0, self.width, obj.position[0]), pitch=pitch)
+        
         footStepSound = self.getGroundTypeSound()
         audio.play(footStepSound[0], footStepSound[1], audio.computePan(0, self.width, newPos[0]))
         
