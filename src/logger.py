@@ -25,6 +25,8 @@ class Logger(object):
         global _instance
         _instance = self
         self.log("Info", self, "Log system initialized")
+        sys.stdout = self
+        sys.stderr = self
 
 
     def log(self, category, system, message):
@@ -49,6 +51,10 @@ class Logger(object):
 
     def getLogIO(self):
         return self.logIO
+
+    def write(self, msg):
+        self.log("Warning", 'console', msg.rstrip("\n"))
+        return len(msg)
     
     def event_quit_game(self, data):
         self.log('Info', self, "Loggging system terminated")
