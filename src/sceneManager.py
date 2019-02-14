@@ -81,6 +81,10 @@ class SceneManager(object):
             eventManager.post(eventManager.LEAVE_SCENE, {"scene": self.activeScene, "nextScene": s})
         self.activeScene = s
         s.activate(silentEntering, params)
+        # key = inputHandler.getLastKeyPressed()
+        # if key is not None:
+        # self.execute("input_press_%s" % key)
+    
 
     def sceneExists(self, name):
         return True if self.scenes.get(name, None) is not None else False
@@ -188,17 +192,16 @@ class SceneManager(object):
                 except Exception as e:
                     logger.exception(self, "Failed to execute {cls}.event_interval: {exception}".format(cls=x.__class__.__name__, exception=e), e)
                 x._nextTick = now + x._interval
-    def onKeyDown(self, key, mod):
-        action = inputHandler.action(key, mod)
+    def onKeyDown(self, event):
+        action = inputHandler.action(event)
         if action is None:
             return False
         return self.execute("input_press_%s" % action)
-    def onKeyUp(self, key, mod):
-        action = inputHandler.action(key, mod)
+    def onKeyUp(self, event):
+        action = inputHandler.action(event)
         if action is None:
             return False
         return self.execute("input_release_%s" % action)
-    
     def execute(self, script, data=None, target=None):
         if target is None:
             objList = [self]
@@ -296,15 +299,15 @@ def initialize():
     logger.info(_instance, "Loaded {count} scenes".format(count=loadedScenes))
     return True
 
-def onKeyDown(key, mods):
+def onKeyDown(event):
     global _instance
 
-    _instance.onKeyDown(key, mods)
+    _instance.onKeyDown(event)
 
-def onKeyUp(key, mods):
+def onKeyUp(event):
     global _instance
 
-    _instance.onKeyUp(key, mods)
+    _instance.onKeyUp(event)
 
 def loadScene(name):
     global _instance

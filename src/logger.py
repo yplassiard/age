@@ -55,6 +55,9 @@ class Logger(object):
     def write(self, msg):
         self.log("Warning", 'console', msg.rstrip("\n"))
         return len(msg)
+
+    def flush(self):
+        self.logIO.flush()
     
     def event_quit_game(self, data):
         self.log('Info', self, "Loggging system terminated")

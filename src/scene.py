@@ -478,6 +478,7 @@ A region is represented as a rectangle.
                or (newPos[1] == pos[1] and newPos[0] >= pos[0] and newPos[0] <= pos[2]):
                 scene,enter = region.get("link", "").split(".")
                 self.nextScene = scene
+                self.stopMoving()
                 leaveCurrentScene(params={"enter": enter})
                 return
         if newPos[0] == 0 or newPos[0] == self.width or newPos[1] == 0 or newPos[1] == self.height:

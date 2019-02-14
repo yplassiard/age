@@ -83,9 +83,9 @@ def main():
         if event.type == QUIT:
             return
         elif event.type == pygame.KEYDOWN and isInAnimation() is False:
-            sceneManager.onKeyDown(event.key, event.mod)
+            sceneManager.onKeyDown(event)
         elif event.type == pygame.KEYUP and isInAnimation() is False:
-            sceneManager.onKeyUp(event.key, event.mod)
+            sceneManager.onKeyUp(event)
         # check our own events
 
         eventManager.pump()

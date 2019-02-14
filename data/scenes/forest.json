@@ -31,7 +31,8 @@
              {"name": "NPC 1",
               "type": "npc",
               "position": [10, 15],
-              "scene": "npc1"
+              "scene": "npc1",
+              "auto-interact": "once"
              }
          ]
              

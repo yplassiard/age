@@ -11,23 +11,31 @@ keyboardMap = {
     pygame.K_RIGHT: "right",
     pygame.K_SPACE: "pause"
 }
-def action(key, mods):
+
+lastKeyPressed = None
+
+def action(event):
     """Maps the given keyboard event (or joystick) to an action.)."""
 
     global keyboardMap
+    global lastKeyPressed
     
-
-    ret = keyboardMap.get(key, pygame.key.name(key))
+    ret = keyboardMap.get(event.key, pygame.key.name(event.key))
     if ret is not None:
-        if mods & pygame.KMOD_SHIFT:
+        if event.mod & pygame.KMOD_SHIFT:
             ret = "shift_%s" % ret
-        if mods & pygame.KMOD_CTRL:
+        if event.mod & pygame.KMOD_CTRL:
             ret = "control_%s" % ret
-        if mods & pygame.KMOD_ALT:
+        if event.mod & pygame.KMOD_ALT:
             ret = "alt_%s" % ret
-        if mods & pygame.KMOD_META:
+        if event.mod & pygame.KMOD_META:
             ret = "windows_%s" % ret
+        lastKeyPressed = ret if event.type == pygame.KEYDOWN else None
         return ret
     return None
 
 
+def getLastKeyPressed():
+    global lastKeyPressed
+
+    return lastKeyPressed

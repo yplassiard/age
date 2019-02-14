@@ -160,10 +160,16 @@ class NonPlayableCharacter(Object):
     """This is a non-playable character. It will instanciate a StoryText scene when talking to him,
 i.e when using this object."""
     storyScene = None
+    autoInteract = None
+    interactCount = 0
 
     def __init__(self, name, config):
         super().__init__(name, config)
         scene = gameconfig.getValue(config, "scene", str, {"defaultValue": None})
+        interact = gameconfig.getValue(config, "auto-interact", str, {"defaultValue": 'never'})
+        if interact not in ["never", "once", "always"]:
+            raise RuntimeError("auto-interact value {v} should be one of 'never', 'once', 'always'".format(v=interact))
+        self.autoInteract = interact
         if scene is None:
             raise RuntimeError(self, "No story scene configured for this NPC.")
         import sceneManager
@@ -176,8 +182,11 @@ i.e when using this object."""
 
 
     def onInteract(self, scene, player):
-        self.use(None)
-        return True
+        if (self.autoInteract == 'once' and self.interactCount == 0) or self.autoInteract == 'always':
+            self.use(None)
+            self.interactCount += 1
+            return True
+        return False
     
     def use(self, target):
         if self.storyScene is not None:
