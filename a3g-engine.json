@@ -1,0 +1,57 @@
+{
+    "resources": {
+        "sounds": [
+            {
+                "name": "error-sound",
+                "file": "error-sound.ogg"
+            },
+            {"name": "menuSelect",
+             "file": "menu-select.ogg"},
+            {"name": "menuValidate",
+             "file": "menu-validate.ogg"},
+            {"name": "menuCancel",
+             "file": "menu-cancel.ogg"},
+            {"name": "message",
+             "file": "message.wav"},
+            {"name": "messageFinished",
+             "file": "message-finished.wav"},
+            {"name": "step1",
+             "file": "step-walk-1.ogg"},
+            {"name": "step2",
+             "file": "step-walk-2.ogg"},
+            {"name": "step3",
+             "file": "step-walk-3.ogg"},
+            {"name": "step4",
+             "file": "step-walk-4.ogg"},
+            {"name": "forest-step1",
+             "file": "ForestFoot1.ogg"},
+            {"name": "forest-step2",
+             "file": "ForestFoot2.ogg"},
+            {"name": "forest-step3",
+             "file": "ForestFoot3.ogg"},
+            {"name": "forest-step4",
+             "file": "ForestFoot4.ogg"},
+            {"name": "chest-signal-sound",
+             "file": "chest-signal.ogg"},
+            {"name": "key-signal-sound",
+             "file": "key-signal.ogg"},
+            {"name": "npc-signal-sound",
+             "file": "npc-signal.ogg"}
+        ],
+        "music": [],
+        "controls": {}
+    },
+    "scenes": {
+        "mainmenu": "mainmenu.json"
+    },
+    "player": {
+        "name": "Link",
+        "health": 3,
+        "magic": 0,
+        "stamina": 10
+    },
+    "start-scene": "mainmenu"
+}
+             
+             
+            
