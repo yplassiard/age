@@ -88,6 +88,8 @@ def dispatch(event):
     global eventListeners
 
     script = "event_%s" % eventNames.get(event.get("type", 'unknown'), None)
+    willScript = "event_will_%s" % eventNames.get(event.get("type", 'unknown'), None)
+    didScript = "event_did_%s" % eventNames.get(event.get("type", 'unknown'), None)
     target = event.get("target", None)
     targets = []
     if target is not None:
@@ -96,9 +98,23 @@ def dispatch(event):
         targets.extend(eventListeners)
     for listener in targets:
         method = getattr(listener, script, None)
+        willMethod = getattr(listener, willScript, None)
+        didMethod = getattr(listener, didScript, None)
+        if willMethod:
+            try:
+                willMethod(event.get('data', None))
+            except:
+                logger.exception("eventManager", "Failed to execute {name}.{script}({event}): {exception}".format(name=listener.__class__.__name__, script=willScript, event=event, exception=e), e)
+                pass
+        
         if method:
             try:
                 method(event.get('data', None))
             except Exception as e:
                 logger.exception("eventManager", "Failed to execute {name}.{script}({event}): {exception}".format(name=listener.__class__.__name__, script=script, event=event, exception=e), e)
                 continue
+        if didMethod:
+            try:
+                didMethod(event.get('data', None))
+            except:
+                logger.exception("eventManager", "Failed to execute {name}.{script}({event}): {exception}".format(name=listener.__class__.__name__, script=script, event=event, exception=e), e)
