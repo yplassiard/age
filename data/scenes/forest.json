@@ -8,11 +8,6 @@
              {"name": "ambiant-forest",
               "file": "forest-ambiance.ogg",
               "loops": -1
-             },
-             {"name": "forest-music",
-              "file": "forest-music.ogg",
-              "loops": -1,
-              "volume": 0.3
              }
          ],
          "walking": ["forest-step1", "forest-step2", "forest-step3", "forest-step4"],
@@ -23,7 +18,7 @@
               "spawn-height": "0"
              },
              {"name": "south",
-              "link": "forest_c4.north",
+               "link": "forest_c4.north",
               "position": [12, 0, 18, 0]
              }
          ],
@@ -65,7 +60,12 @@
               "file": "forest-ambiance.ogg",
               "loops": -1,
               "volume": 0.8
-             }
+             },
+             {"name": "forest-music",
+              "file": "forest-music.ogg",
+              "loops": -1,
+              "volume": 0.3
+             }	     
          ],
          "walking": ["forest-step1", "forest-step2", "forest-step3", "forest-step4"],
          "region-links": [
@@ -81,7 +81,7 @@
              "Bonjour!",
              "Hum, vous cherchez quelqu'un nommé Pixel ?",
              "je regrette, jamais entendu parler.",
-             "Ceci dit ne vous éloignez pas trop. C.est dangereux là-dehors."
+             "Ceci dit ne vous éloignez pas trop. C'est dangereux là-dehors."
          ],
          "interval": 30
         }
