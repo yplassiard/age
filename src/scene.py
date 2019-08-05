@@ -1,4 +1,4 @@
-# *-* coding: utf8 *-*
+# *-* coding: utf-8 *-*
 
 import constants
 import core
@@ -26,6 +26,7 @@ class Scene(object):
 		if name is None:
 			raise RuntimeError("Cannot create a scene without a name")
 		self.name = name
+		eventManager.addListener(self)
 		if config is not None:
 			self.config = config
 			self.activateSound = config.get("enterSound", None)
@@ -135,7 +136,7 @@ possible to implement option selection."""
 	choices = []
 	default = 0
 	idx = 0
-	title = 'Unknown'
+	title = None
 	speakTitle = True
 	choiceIdx = -1
 	selectedIdx = -1
@@ -161,7 +162,8 @@ possible to implement option selection."""
 		self.idx = self.default
 		self.selectedIdx = self.idx
 		self.speakTitle = config.get("speak-title", True)
-		self.title = config.get('title', 'unknown')
+		if self.title is None:
+			self.title = config.get('title', 'unknown')
 		self.selectSound = config.get('select-sound', None)
 		self.selectSoundVolume = config.get("select-sound-volume", constants.AUDIO_FX_VOLUME)
 		self.validateSound = config.get('validate-sound', None)
@@ -385,15 +387,12 @@ class MapRegionScene(IntervalScene):
 						pos = gameconfig.getValue(region, "position", list, {"elements": 4})
 						msg = "Endering {name} {enter}: {pos}".format(name=self.name, enter=enter, pos=pos)
 						logger.debug(self, msg)
-						speak(msg)
+						speech.speak(msg)
 						if pos[0] == pos[2]:
 							self.playerPosition = [pos[0] + 1 if pos[0] == 0 else self.width - 2, pos[1] + int((pos[3] - pos[1]) / 2)]
 						elif pos[1] == pos[3]:
 							self.playerPosition = [pos[0] + int((pos[2] - pos[0]) / 2), pos[1] + 1 if pos[1] == 0 else self.height - 2]
 						else:
-							self.playerPosition = [int(self.width / 2), int(self.height / 2)]
-						if self.playerPosition is None:
-							logger.error(self, "Entering scene with unknown position")
 							self.playerPosition = [int(self.width / 2), int(self.height / 2)]
 			else:
 				logger.info(self, "No enter specified, spawning in the middle.")
@@ -524,10 +523,11 @@ class MapRegionScene(IntervalScene):
 			self.isWalking = True
 
 	def stopMoving(self):
+		if self.isWalking or self.isRunning:
+			eventManager.post(eventManager.HERO_WALK_STOP, {"player": self.player})
 		self.isWalking = False
 		self.isRunning = False
 		self.direction = None
-		
 		
 
 		
@@ -552,7 +552,7 @@ class MapRegionScene(IntervalScene):
 		obj,distance = objectManager.getNearestObject(self.playerPosition, self.direction, self.player, self.objects)
 		if obj is not None:
 			if distance <= obj.getInteractionDistance():
-				if obj.onInteract(self, self.player) is True:
+				if obj.onInteract(self, self.player, True) is True:
 					self.stopMoving()
 	
 def leaveCurrentScene(params=None):

@@ -7,6 +7,7 @@ import traceback
 
 import eventManager
 
+
 """Log Categories defines, for each component, the level we want to log."""
 _logComponents = {
 	"sceneManager": 100,
@@ -144,7 +145,14 @@ def exception(system, message, exception):
 	global _instance
 		
 	if _instance is not None:
-		_instance.log("Exception", system, "{message}: {exception}".format(message=message, exception=exception))
+		msg = "{message}: {exception}".format(message=message, exception=exception)
+		_instance.log(msg)
+		import speech
+		try:
+			speech.speak(msg)
+		except:
+			pass
+		_instance.log("Exception", system, msg)
 		traceback.print_tb(exception.__traceback__)
 		
 	else:

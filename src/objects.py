@@ -179,8 +179,8 @@ i.e when using this object."""
 		self.interactDistance = 0
 		
 
-	def onInteract(self, scene, player):
-		if (self.autoInteract == 'once' and self.interactCount == 0) or self.autoInteract == 'always':
+	def onInteract(self, scene, player, onPurpose=False):
+		if (self.autoInteract == 'once' and self.interactCount == 0) or self.autoInteract == 'always' or onPurpose:
 			self.use(None)
 			self.interactCount += 1
 			return True
