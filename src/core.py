@@ -72,8 +72,8 @@ def main():
 	background.blit(text, textpos)
 	screen.blit(background, (0, 0))
 	pygame.display.flip()
-	oldTime = 0
-	clock = pygame.time.Clock()
+	now = time.time()
+	oldTime = now
 	
 	if sceneManager.loadScene(gameconfig.getStartScene()) is False:
 		print("Failed to load first scene {name}".format(name=gameconfig.getStartScene()))
@@ -91,9 +91,9 @@ def main():
 
 		eventManager.pump()
 		
-		now = clock.tick(120)
+		now = time.time()
 		# logger.info('main', "Tick is {time}".format(time=now))
-		if now > constants.INTERVAL_TICK_RESOLUTION:
+		if now - oldTime > constants.INTERVAL_TICK_RESOLUTION:
 			currentTicks = pygame.time.get_ticks()
 			eventManager.post(eventManager.SCENE_INTERVAL_TICK, {"time": currentTicks})
 			oldTime = now

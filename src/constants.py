@@ -5,7 +5,7 @@
 # global configuration
 CONFIG_RESOURCE_DIR = "res"
 CONFIG_DATA_DIR = "data"
-INTERVAL_TICK_RESOLUTION = 1
+INTERVAL_TICK_RESOLUTION = 0.04
 
 # Audio constants
 AUDIO_FX_VOLUME = 0.8
