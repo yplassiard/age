@@ -146,7 +146,6 @@ def exception(system, message, exception):
 		
 	if _instance is not None:
 		msg = "{message}: {exception}".format(message=message, exception=exception)
-		_instance.log(msg)
 		import speech
 		try:
 			speech.speak(msg)

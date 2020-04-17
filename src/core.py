@@ -97,5 +97,5 @@ def main():
 			currentTicks = pygame.time.get_ticks()
 			eventManager.post(eventManager.SCENE_INTERVAL_TICK, {"time": currentTicks})
 			oldTime = now
-	logger.log("main", "Exiting game.")
+	logger.info("main", "Exiting game.")
 	pygame.quit()

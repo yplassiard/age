@@ -38,6 +38,7 @@
             {"name": "npc-signal-sound",
              "file": "npc-signal.ogg"}
         ],
+        "stereo-field-width": "80",
         "music": [],
         "controls": {}
     },

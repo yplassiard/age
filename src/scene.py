@@ -504,15 +504,14 @@ class MapRegionScene(IntervalScene):
 				if obj.onInteract(self, self.player) is True:
 					self.stopMoving()
 			else:
-				pitch = 1.0
-				if obj.position[1] > self.playerPosition[1]:
-					pitch += 0.5
-				elif obj.position[1] < self.playerPosition[1]:
-					pitch -= 0.5
+				diffY = obj.position[1] - self.playerPosition[1]
+				if diffY > 5:
+					diffY = 5
+				elif diffY < -5:
+					diffY = -5
 				volume = (constants.AUDIO_FX_VOLUME - (distance / self.player.getMaxDistance()) if distance < self.player.getMaxDistance() else 0)
-				logger.info(self, "Nearest object {obj} at {distance}, pitch={pitch}".format(obj=obj, distance=distance, pitch=pitch))
-				audio.play(obj.getSignalSound(), volume, audio.computePan(0, self.width, obj.position[0]), pitch=pitch)
-					
+				logger.info(self, "Nearest object {obj} at {distance}, pitch={pitch}".format(obj=obj, distance=distance, pitch=diffY))
+				audio.play(obj.getSignalSound(), volume, audio.computePan(0, self.width, obj.position[0]), pitch=audio.computePitch(0.7, 1.3, diffY))					
 		footStepSound = self.getGroundTypeSound()
 		audio.play(footStepSound[0], footStepSound[1], audio.computePan(0, self.width, newPos[0]))
 				

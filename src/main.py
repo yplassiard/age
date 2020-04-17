@@ -12,4 +12,4 @@ if __name__ == '__main__':
 	except Exception as e:
 		print("Uncaught exception: {e}".format(e=e))
 		import traceback
-		traceback.print_tb(exception.__traceback__)
+		traceback.print_tb(e.__traceback__)
