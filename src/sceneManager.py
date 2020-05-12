@@ -259,7 +259,7 @@ def initialize():
 		logger.error(_instance, "Failed to load secenes: {exception}".format(exception=e))
 		return False
 	for entry in dir:
-		m = re.match("(^[^#]*.*)\.py$", entry.name)
+		m = re.match("(^[^#]+.*)\.py$", entry.name)
 		if m is not None and entry.name != 'scene.py':
 			logger.info(_instance, "Loading scene {name}".format(name=m.group(1)))
 			totalScenes += 1
@@ -278,9 +278,15 @@ def initialize():
 		logger.warning(self, "No user-defined scenes found.")
 	if dir is not None:
 		for entry in dir:
-			m = re.match("(^[^#]*.*)\.json$", entry.name)
+			m = re.match("(^[^#]+.*)\.json$", entry.name)
 			if m is not None:
-				jsonConfigList = gameconfig.loadSceneConfiguration(entry.name)
+				try:
+					jsonConfigList = gameconfig.loadSceneConfiguration(entry.name)
+				except:
+					jsonConfigList = None
+				if jsonConfigList is None:
+					logger.error("sceneManager", "Failed to load scene {name}".format(name=entry.name))
+					continue
 				for jsonConfig in jsonConfigList:
 					totalScenes += 1
 					if jsonConfig is not None:
