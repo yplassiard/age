@@ -21,12 +21,12 @@ SCENE_INTERVAL_TICK = 15
 SCENE_STACK = 16
 SCENE_UNSTACK = 17
 
-# hero specific events
-HERO_SPAWN = 50
-HERO_WALK_START = 51
-HERO_WALK_STOP = 52
-HERO_RUN_START = 53
-HERO_RUN_STOP = 54
+# character specific events
+CHARACTER_SPAWN = 50
+CHARACTER_MOVE = 51
+CHARACTER_ATTRIBUTE_CHANGE = 52
+
+
 
 
 
@@ -56,11 +56,10 @@ eventNames = {
 	QUIT_GAME: "quit_game",
 	PAUSE_GAME: "pause_game",
 	
-	HERO_SPAWN: "hero_spawn",
-	HERO_WALK_START: "hero_walk_start",
-	HERO_WALK_STOP: "hero_walk_stop",
-	HERO_RUN_START: "hero_run_start",
-	HERO_RUN_STOP: "hero_run_stop"
+	CHARACTER_SPAWN: "character_spawn",
+	CHARACTER_MOVE: "character_move",
+	CHARACTER_ATTRIBUTE_CHANGE: "character_attribute_change",
+	
 }
 
 def addListener(obj):
@@ -71,7 +70,14 @@ is found within obj's implementation."""
 	if obj is not None:
 		logger.debug("eventManager", "addListener({name})".format(name=getattr(obj, "name", obj.__class__.__name__)))
 		eventListeners.append(obj)
-		
+def removeListener(obj):
+	"""Removes a registered object"""
+	global eventListeners
+
+	if obj is None:
+		return
+	eventListeners.remove(obj)
+
 def post(type, data=None, target=None):
 	"""Posts an event to all listeners. the type argument must be one of the defined eventManager
 constants above. The data argument is a dict which may contain any useful data for listeners.
@@ -116,8 +122,11 @@ def dispatch(event):
 		for method, listener in list:
 			logger.debug("eventManager", "{obj}.{script}".format(obj=listener.__class__.__name__, script=method.__name__)) if not "interval" in method.__name__ else None
 			try:
-				method(event.get('data', None))
+				ret = method(event.get('data', None))
 			except Exception as e:
 				logger.exception("eventManager", "Failed to execute {name}.{script}({event}): {exception}".format(name=listener.__class__.__name__, script=method.__name__, event=event, exception=e), e)
-
+				ret = False
+			if ret is False:
+				logger.debug("eventManager", "{obj}.{script}: blocked event propagation".format(obj=listener.__class__.__name__, script=method.__name__))
+				return 
 			
