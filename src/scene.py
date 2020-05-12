@@ -23,10 +23,11 @@ class Scene(object):
 	speechDescription = None
 
 	def __init__(self, name, config):
+
 		if name is None:
 			raise RuntimeError("Cannot create a scene without a name")
+
 		self.name = name
-		eventManager.addListener(self)
 		if config is not None:
 			self.config = config
 			self.activateSound = config.get("enterSound", None)
@@ -53,6 +54,7 @@ class Scene(object):
 		if self.focused:
 			return True
 		self.focused = True
+		eventManager.addListener(self)
 		logger.info(self, "Scene {name} activated.".format(name=self.name))
 		if silent is False and self.activateSound is not None:
 			audio.play(self.activateSound)
@@ -64,6 +66,7 @@ class Scene(object):
 		if self.focused is False:
 			return
 		self.focused = False
+		eventManager.removeListener(self)
 		logger.info(self, "Leaving scene {name}".format(name=self.name))
 		if silent is False and self.deactivateSound is not None:
 			audio.play(self.deactivateSound)
@@ -105,7 +108,7 @@ class Scene(object):
 class IntervalScene(Scene):
 	"""Base class that implement a configurable event_interval facility. Each time the interval is
 elapsed, the event_interval method will be called.
-Note: This is event is not called when the scene is not active.
+Note: This event is not called when the scene is not active.
 """
 	_interval = 0
 	
@@ -218,11 +221,11 @@ possible to implement option selection."""
 	def input_press_left(self):
 		if self.choiceIdx != -1:
 			self.choiceIdx -= 1
-		if self.choiceIdx == 0:
-			self.choiceIdx = len(self.choices[self.idx]) - 1
-		self.options[self.idx] = self.choiceIdx
-		audio.play(self.selectSound)
-		self.speakChoice()
+			if self.choiceIdx == 0:
+				self.choiceIdx = len(self.choices[self.idx]) - 1
+				self.options[self.idx] = self.choiceIdx
+				audio.play(self.selectSound)
+				self.speakChoice()
 
 	def input_press_action(self):
 		audio.play(self.validateSound, self.validateSoundVolume)
@@ -330,6 +333,7 @@ class MapRegionScene(IntervalScene):
 	runSounds = []
 	isWalking = False
 	isRunning = False
+	playerMoveTicks = 0
 
 	def __init__(self, name, config):
 		config["interval"] = 40
@@ -400,54 +404,26 @@ class MapRegionScene(IntervalScene):
 		else:
 			logger.info(self, "No params specified, spawning in the middle.")
 			self.playerPosition = [int(self.width / 2), int(self.height / 2)]
-		eventManager.post(eventManager.HERO_SPAWN, {"scene": self, "position": self.playerPosition})
+		eventManager.post(eventManager.CHARACTER_SPAWN, {"scene": self, "position": self.playerPosition})
 
 	def event_will_scene_stack(self, evt):
 		self.stopMoving()
 	
-	def input_press_up(self):
-		self.direction = constants.DIRECTION_NORTH
-		self.onWalk()
-		
-	def input_press_down(self):
-		self.direction = constants.DIRECTION_SOUTH
-		self.onWalk()
-		
-	def input_press_right(self):
-		self.direction = constants.DIRECTION_EAST
-		self.onWalk()
-
-	def input_press_left(self):
-		self.direction = constants.DIRECTION_WEST
-		self.onWalk()
-
-	def input_release_up(self):
-		self.stopMoving()
-	def input_release_down(self):
-		self.stopMoving()
-	def input_release_left(self):
-		self.stopMoving()
-	def input_release_right(self):
-		self.stopMoving()
 		
 	def input_press_action(self):
 		self.onAction()
 
 	def input_press_shift_up(self):
-		self.direction = constants.DIRECTION_NORTH
-		self.onWalk(True)
+		self.onWalk(True, constants.DIRECTION_NORTH)
 
 	def input_press_shift_down(self):
-		self.direction = constants.DIRECTION_SOUTH
-		self.onWalk(True)
+		self.onWalk(True, constants.DIRECTION_SOUTH)
 
 	def input_press_shift_right(self):
-		self.direction = constants.DIRECTION_EAST
-		self.onWalk(True)
+		self.onWalk(True, constants.DIRECTION_EAST)
 
 	def input_press_shift_left(self):
-		self.direction = constants.DIRECTION_WEST
-		self.onWalk(True)
+		self.onWalk(True, constants.DIRECTION_WEST)
 
 	def input_release_shift_up(self):
 		self.stopMoving()
@@ -458,24 +434,76 @@ class MapRegionScene(IntervalScene):
 	def input_release_shift_right(self):
 		self.stopMoving()
 		
-
-
-	def onWalk(self, running=False):
-		delta = core.currentTicks - self.sceneTicks
+	def input_press_up(self):
+		self.onWalk(False, constants.DIRECTION_NORTH)
 		
-		if delta < constants.HERO_RUN_TIME and running:
-			return
-		if delta < constants.HERO_WALK_TIME and not running:
-			return
-		self.sceneTicks = core.currentTicks
+	def input_press_down(self):
+		self.onWalk(False, constants.DIRECTION_SOUTH)
+		
+	def input_press_right(self):
+		self.onWalk(False, constants.DIRECTION_EAST)
+
+	def input_press_left(self):
+		self.onWalk(False, constants.DIRECTION_WEST)
+
+	def input_release_up(self):
+		self.stopMoving()
+	def input_release_down(self):
+		self.stopMoving()
+	def input_release_left(self):
+		self.stopMoving()
+	def input_release_right(self):
+		self.stopMoving()
+	def onWalk(self, running=False, direction=None):
+		self.isRunning = running
+		if self.isRunning is False:
+			self.isWalking = True
+		if direction is not None:
+			self.direction = direction
+		eventManager.post(eventManager.CHARACTER_MOVE, {"direction": self.direction, "type": "run" if running is True else "walk"})
+		self.playerMoveTicks = core.currentTicks
+
+	def stopMoving(self):
+		self.isRunning = False
+		self.isWalking = False
+		self.direction = None
+		logger.info(self, "Player stopped moving.")
+		
+	def event_will_character_move(self, evt):
+		eventType = evt.get("type", "walk")
+		direction = evt.get("direction", None)
+		logger.info(self, "willMore(%s)" % evt)
+		if direction is None:
+			logger.error(self, "Moving without a direction is not allowed")
+			return False # invalid argument
 		newPos = self.playerPosition.copy()
-		if self.direction == constants.DIRECTION_NORTH:
+		if direction == constants.DIRECTION_NORTH:
 			newPos[1] += 1
-		elif self.direction == constants.DIRECTION_SOUTH:
+		elif direction == constants.DIRECTION_SOUTH:
 			newPos[1] -= 1
-		elif self.direction == constants.DIRECTION_EAST:
+		elif direction == constants.DIRECTION_EAST:
 			newPos[0] += 1
-		elif self.direction == constants.DIRECTION_WEST:
+		elif direction == constants.DIRECTION_WEST:
+			newPos[0] -= 1
+		if newPos[0] == 0 or newPos[0] == self.width or newPos[1] == 0 or newPos[1] == self.height:
+			eventManager.post(eventManager.CHARACTER_HIT, {"type": "wall"})
+			return False
+		return True # we can move this character in the desired direction.
+	
+	def event_character_move(self, evt):
+		eventType = evt.get("type", "walk")
+		direction = evt.get("direction", None)
+		if direction is None:
+			logger.error(self, "Moving without a direction is not allowed")
+			return
+		newPos = self.playerPosition.copy()
+		if direction == constants.DIRECTION_NORTH:
+			newPos[1] += 1
+		elif direction == constants.DIRECTION_SOUTH:
+			newPos[1] -= 1
+		elif direction == constants.DIRECTION_EAST:
+			newPos[0] += 1
+		elif direction == constants.DIRECTION_WEST:
 			newPos[0] -= 1
 			
 		# let's see if there is a link to another region
@@ -486,7 +514,6 @@ class MapRegionScene(IntervalScene):
 				 or (newPos[1] == pos[1] and newPos[0] >= pos[0] and newPos[0] <= pos[2]):
 				scene,enter = region.get("link", "").split(".")
 				self.nextScene = scene
-				self.stopMoving()
 				leaveCurrentScene(params={"enter": enter})
 				return
 		if newPos[0] == 0 or newPos[0] == self.width or newPos[1] == 0 or newPos[1] == self.height:
@@ -498,11 +525,12 @@ class MapRegionScene(IntervalScene):
 		# now, let's see what's on this new position
 
 		import objectManager
-		obj,distance = objectManager.getNearestObject(self.playerPosition, self.direction, self.player, self.objects)
+		obj,distance = objectManager.getNearestObject(self.playerPosition, direction, self.player, self.objects)
 		if obj is not None:
 			if distance <= obj.getInteractionDistance():
 				if obj.onInteract(self, self.player) is True:
 					self.stopMoving()
+					
 			else:
 				diffY = obj.position[1] - self.playerPosition[1]
 				if diffY > 5:
@@ -515,23 +543,13 @@ class MapRegionScene(IntervalScene):
 		footStepSound = self.getGroundTypeSound()
 		audio.play(footStepSound[0], footStepSound[1], audio.computePan(0, self.width, newPos[0]))
 				
-		eventManager.post(eventManager.HERO_WALK_START, {"position": self.playerPosition, "scene": self})
-		if self.isRunning is False and running is True:
-			self.isRunning = True
-		elif self.isRunning is False:
-			self.isWalking = True
 
-	def stopMoving(self):
-		if self.isWalking or self.isRunning:
-			eventManager.post(eventManager.HERO_WALK_STOP, {"player": self.player})
-		self.isWalking = False
-		self.isRunning = False
-		self.direction = None
-		
+
 
 		
+
 	def event_interval(self):
-		if self.isWalking or self.isRunning:
+		if (self.isWalking and core.currentTicks - self.playerMoveTicks > constants.HERO_WALK_TIME) or (self.isRunning and core.currentTicks - self.playerMoveTicks > constants.HERO_RUN_TIME):
 			self.onWalk(self.isRunning)
 	def getGroundTypeSound(self):
 		import random
