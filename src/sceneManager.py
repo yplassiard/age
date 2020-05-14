@@ -341,6 +341,11 @@ def leaveCurrentScene(params=None):
 	
 	_instance.leave(params)
 
+def getActiveScene():
+	global _instance
+
+	return _instance.getActiveScene()
+
 def getPlayer():
 	global _instance
 	

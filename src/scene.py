@@ -334,6 +334,7 @@ class MapRegionScene(IntervalScene):
 	isWalking = False
 	isRunning = False
 	playerMoveTicks = 0
+	objectEchoTick = 0
 
 	def __init__(self, name, config):
 		config["interval"] = 40
@@ -525,21 +526,13 @@ class MapRegionScene(IntervalScene):
 		# now, let's see what's on this new position
 
 		import objectManager
-		obj,distance = objectManager.getNearestObject(self.playerPosition, direction, self.player, self.objects)
-		if obj is not None:
+		objs = objectManager.getNearestObjects(self.playerPosition, self.player, self.objects)
+		if objs is not None:
+			distance,obj = objs[0] # takes the nearest object
 			if distance <= obj.getInteractionDistance():
 				if obj.onInteract(self, self.player) is True:
 					self.stopMoving()
 					
-			else:
-				diffY = obj.position[1] - self.playerPosition[1]
-				if diffY > 5:
-					diffY = 5
-				elif diffY < -5:
-					diffY = -5
-				volume = (constants.AUDIO_FX_VOLUME - (distance / self.player.getMaxDistance()) if distance < self.player.getMaxDistance() else 0)
-				logger.info(self, "Nearest object {obj} at {distance}, pitch={pitch}".format(obj=obj, distance=distance, pitch=diffY))
-				audio.play(obj.getSignalSound(), volume, audio.computePan(0, self.width, obj.position[0]), pitch=audio.computePitch(0.7, 1.3, diffY))					
 		footStepSound = self.getGroundTypeSound()
 		audio.play(footStepSound[0], footStepSound[1], audio.computePan(0, self.width, newPos[0]))
 				
@@ -549,8 +542,34 @@ class MapRegionScene(IntervalScene):
 		
 
 	def event_interval(self):
+		import sceneManager
+		
+
+		if sceneManager.getActiveScene() != self:
+			return
 		if (self.isWalking and core.currentTicks - self.playerMoveTicks > constants.HERO_WALK_TIME) or (self.isRunning and core.currentTicks - self.playerMoveTicks > constants.HERO_RUN_TIME):
 			self.onWalk(self.isRunning)
+		if core.currentTicks - self.objectEchoTick > constants.OBJECT_ECHO_TIME:
+			import objectManager
+			objs = objectManager.getNearestObjects(self.playerPosition, self.player, self.objects)
+			for distance,obj in objs:
+				diffY = obj.position[1] - self.playerPosition[1]
+				if diffY > 5:
+					diffY = 5
+				elif diffY < -5:
+					diffY = -5
+				diffX = (obj.position[0] - self.playerPosition[0]) / 100 * 8
+				if diffX <= -0.8:
+					diffX = -0.8
+				elif diffX >= 0.8:
+					diffX = 0.8
+				volume = (constants.AUDIO_FX_VOLUME - (distance / self.player.getMaxDistance()) if distance <= self.player.getMaxDistance() else 0)
+				if volume < 0:
+					volume = 0
+				logger.info(self, "Nearest object {obj} at {distance}, vol={volume}, pitch={pitch}, pan={pan}".format(obj=obj, distance=distance, pitch=diffY, pan=diffX, volume=volume))
+				audio.play(obj.getSignalSound(), volume, diffX, pitch=audio.computePitch(0.7, 1.3, diffY))
+			self.objectEchoTick = core.currentTicks
+			
 	def getGroundTypeSound(self):
 		import random
 		if self.walkSounds is None or len(self.walkSounds) == 0:

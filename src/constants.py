@@ -32,6 +32,7 @@ DIRECTION_WEST = 3
 # Objects specific constants
 HERO_WALK_TIME = 500
 HERO_RUN_TIME = 300
+OBJECT_ECHO_TIME = 1000
 
 # Peckables
 LOCKSTATE_LOCKED = 100
