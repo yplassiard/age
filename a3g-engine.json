@@ -51,7 +51,8 @@
         "magic": 0,
         "stamina-recovery-time": 500,
         "max-distance": 10.0,
-        "stamina": 60
+        "stamina": 60,
+        "stamina-increment": 1
     },
     "start-scene": "mainmenu"
 }
