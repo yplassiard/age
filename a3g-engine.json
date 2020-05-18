@@ -49,8 +49,9 @@
         "name": "Link",
         "health": 3,
         "magic": 0,
+        "stamina-recovery-time": 500,
         "max-distance": 10.0,
-        "stamina": 10
+        "stamina": 60
     },
     "start-scene": "mainmenu"
 }

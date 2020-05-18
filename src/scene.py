@@ -527,7 +527,7 @@ class MapRegionScene(IntervalScene):
 
 		import objectManager
 		objs = objectManager.getNearestObjects(self.playerPosition, self.player, self.objects)
-		if objs is not None:
+		if objs is not None and len(objs) > 0:
 			distance,obj = objs[0] # takes the nearest object
 			if distance <= obj.getInteractionDistance():
 				if obj.onInteract(self, self.player) is True:
@@ -564,9 +564,9 @@ class MapRegionScene(IntervalScene):
 				elif diffX >= 0.8:
 					diffX = 0.8
 				volume = (constants.AUDIO_FX_VOLUME - (distance / self.player.getMaxDistance()) if distance <= self.player.getMaxDistance() else 0)
-				if volume < 0:
-					volume = 0
-				logger.info(self, "Nearest object {obj} at {distance}, vol={volume}, pitch={pitch}, pan={pan}".format(obj=obj, distance=distance, pitch=diffY, pan=diffX, volume=volume))
+				if volume <= 0:
+					return
+				# logger.info(self, "Nearest object {obj} at {distance}, vol={volume}, pitch={pitch}, pan={pan}".format(obj=obj, distance=distance, pitch=diffY, pan=diffX, volume=volume))
 				audio.play(obj.getSignalSound(), volume, diffX, pitch=audio.computePitch(0.7, 1.3, diffY))
 			self.objectEchoTick = core.currentTicks
 			
@@ -585,11 +585,13 @@ class MapRegionScene(IntervalScene):
 	def onAction(self):
 		import objectManager
 		
-		obj,distance = objectManager.getNearestObject(self.playerPosition, self.direction, self.player, self.objects)
-		if obj is not None:
-			if distance <= obj.getInteractionDistance():
-				if obj.onInteract(self, self.player, True) is True:
-					self.stopMoving()
+		objs = objectManager.getNearestObjects(self.playerPosition, self.player, self.objects)
+		if len(objs) > 0:
+			distance,obj = objs[0]
+			if obj is not None:
+				if distance <= obj.getInteractionDistance():
+					if obj.onInteract(self, self.player, True) is True:
+						self.stopMoving()
 	
 def leaveCurrentScene(params=None):
 		eventManager.post(eventManager.LEAVE_CURRENT_SCENE, {"params": params})

@@ -82,10 +82,10 @@ class AudioManager(object):
 		snd = self.soundMap.get(name, None)
 		if snd is not None:
 			try:
-				snd.play()
 				snd.setVolume(volume)
-				snd.pan(pan)
+				snd.setPan(pan)
 				snd.setPitch(pitch)
+				snd.play(paused=False)
 				return True
 			except Exception as e:
 				logger.exception(self, "Error playing {name}: {exception}".format(name=name, exception=e), e)

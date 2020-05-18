@@ -25,7 +25,9 @@ SCENE_UNSTACK = 17
 CHARACTER_SPAWN = 50
 CHARACTER_MOVE = 51
 CHARACTER_ATTRIBUTE_CHANGE = 52
-
+CHARACTER_HIT = 53
+CHARACTER_TIRED = 54
+CHARACTER_DIED = 55
 
 
 
@@ -59,7 +61,9 @@ eventNames = {
 	CHARACTER_SPAWN: "character_spawn",
 	CHARACTER_MOVE: "character_move",
 	CHARACTER_ATTRIBUTE_CHANGE: "character_attribute_change",
-	
+	CHARACTER_HIT: "character_hit",
+	CHARACTER_TIRED: "character_tired",
+	CHARACTER_DIED: "character_died",
 }
 
 def addListener(obj):
