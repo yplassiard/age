@@ -27,7 +27,10 @@
               "type": "npc",
               "position": [10, 15],
               "scene": "npc1",
-              "auto-interact": "once"
+              "signal-sound": "npc-signal-sound",
+              "auto-interact": "once",
+              "hit-count": 3,
+              "hit-scene": "npc1_hit"
              }
          ]
         },
@@ -81,6 +84,14 @@
              "Hum, vous cherchez quelqu'un nommé Pixel ?",
              "je regrette, jamais entendu parler.",
              "Ceci dit ne vous éloignez pas trop. C'est dangereux là-dehors."
+         ],
+         "interval": 30
+        },
+        {"name": "npc1_hit",
+         "type": "storytext",
+         "story": [
+             "Hey!",
+             "Regardez un peu où vous mettez les pieds!"
          ],
          "interval": 30
         }

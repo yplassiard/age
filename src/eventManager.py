@@ -30,6 +30,14 @@ CHARACTER_TIRED = 54
 CHARACTER_DIED = 55
 
 
+# object specific events
+OBJECT_TAKE = 70
+OBJECT_DROP = 71
+OBJECT_LOCK = 72
+OBJECT_UNLOCK = 73
+OBJECT_HIT = 74
+
+
 
 
 # List objects receiving custom game events.
@@ -64,6 +72,12 @@ eventNames = {
 	CHARACTER_HIT: "character_hit",
 	CHARACTER_TIRED: "character_tired",
 	CHARACTER_DIED: "character_died",
+
+	OBJECT_TAKE: "object_take",
+	OBJECT_DROP: "object_drop",
+	OBJECT_LOCK: "object_lock",
+	OBJECT_UNLOCK: "object_unlock",
+	OBJECT_HIT: "object_hit",
 }
 
 def addListener(obj):

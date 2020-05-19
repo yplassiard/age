@@ -38,7 +38,7 @@ class ObjectManager(object):
 		try:
 			o = cls(name, config)
 		except Exception as e:
-			logger.error(self, "Error instanciating {cls}({name}): {exception}".format(cls=cls.__name__, name=name, exception=e))
+			logger.exception(self, "Error instanciating {cls}({name}): {exception}".format(cls=cls.__name__, name=name, exception=e), e)
 			return False
 		self.objects[name] = o
 		return o

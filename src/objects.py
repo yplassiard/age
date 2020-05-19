@@ -3,7 +3,7 @@
 import logger
 import constants
 import gameconfig
-
+import eventManager
 
 class Object(object):
 	"""Base class for all objects present within the game."""
@@ -11,15 +11,18 @@ class Object(object):
 	position = None
 	signalSound = None
 	interactDistance = -1
-	
+	size = (1, 1)
 	
 
 	def __init__(self, name, config):
 		self.name = name
 		self.logName = "Object(%s)" %(self.name)
+		eventManager.addListener(self)
 		self.position = gameconfig.getValue(config, "position", list, {"elements": 2})
+		self.size = gameconfig.getValue(config, "size", list, {"elements": 2})
 		self.signalSound = "signal-sound"
 		self.interactDistance = gameconfig.getValue(config, "interact-distance", float, {"defaultValue": -1})
+		
 				
 
 	def getInteractionDistance(self):
@@ -38,6 +41,9 @@ class Object(object):
 	def getPosition(self):
 		return self.position
 
+	def getSize(self):
+		return self.size
+	
 	def getSignalSound(self):
 		return self.signalSound
 		
@@ -81,6 +87,8 @@ class Openable(Object):
 			unlocker = objectManager.getObject(unlockerStr)
 			if unlocker is not None and unlocker.name == obj.name and issubclass(unlocker, Key):
 				self.lockState = constants.LOCKSTATE_UNLOCKED
+				eventManager.post(eventManager.OBJECT_UNLOCK, {"container": self,
+																											 "unlocker": unlocker})
 				audio.play(self.unlockSound, self.unlockSoundVolume)
 				return True
 		return False
@@ -163,6 +171,7 @@ i.e when using this object."""
 
 	def __init__(self, name, config):
 		super().__init__(name, config)
+		self.size = (1,1)
 		scene = gameconfig.getValue(config, "scene", str, {"defaultValue": None})
 		interact = gameconfig.getValue(config, "auto-interact", str, {"defaultValue": 'never'})
 		if interact not in ["never", "once", "always"]:
@@ -175,7 +184,11 @@ i.e when using this object."""
 			logger.error(self, "{scene} not found.".format(scene=scene))
 			raise RuntimeError("Invalid NPC configuration: Scene not found")
 		self.storyScene = scene
-		self.signalSound = "npc-signal-sound"
+		self.signalSound = gameconfig.getValue(config, "signal-sound", str)
+		self.hitMax = gameconfig.getValue(config, "hit-count", int, {"defaultValue": -1})
+		self.hitCount = 0
+		self.hitScene = gameconfig.getValue(config, "hit-scene", str, {"defaultValue": None})
+		self.hitSound = gameconfig.getValue(config, "hit-sound", str)
 		self.interactDistance = 0
 		
 
@@ -185,7 +198,24 @@ i.e when using this object."""
 			self.interactCount += 1
 			return True
 		return False
-		
+
+	def event_object_hit(self, evt):
+		obj = evt.get("obj", None)
+		if obj != self:
+			return True
+		self.hitCount += 1
+
+	def event_did_object_hit(self, evt):
+		if self.hitMax != -1 and self.hitCount == self.hitMax:
+			self.hitCount = 0
+			import sceneManager
+
+			if sceneManager.sceneExists(self.hitScene) is False:
+				logger.error(self, "{scene} does not exist".format(scene=self.hitScene))
+				return False
+			sceneManager.stackScene(self.hitScene)
+		return True
+	
 	def use(self, target):
 		if self.storyScene is not None:
 			import sceneManager

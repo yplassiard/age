@@ -174,11 +174,8 @@ def getValue(config, key, cls, attrs=None):
 		raise RuntimeError("Configuration error: The {key} list has to contain at least {count} elements".format(key=key, count=listCount))
 	
 	# sound and music property checks
-	if key.endswith("sound"):
-		volume = config.get("%s-volume" % key, constants.AUDIO_DEFAULT_SOUND_VOLUME)
-		return (ret, volume)
-	if key.endswith("music"):
-		volume = config.get("%s-volume" % key, constants.AUDIO_DEFAULT_MUSIC_VOLUME)
+	if key.endswith("sound") or key.endswith("music"):
+		volume = getValue(config, "%s-volume" % key, float, {"defaultValue": constants.AUDIO_DEFAULT_SOUND_VOLUME})
 		return (ret, volume)
 	return ret
 

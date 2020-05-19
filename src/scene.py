@@ -117,8 +117,8 @@ Note: This event is not called when the scene is not active.
 		if config:
 			self._interval = config.get("interval", None)
 			if self._interval is None or isinstance(self._interval, int) is False or self._interval < constants.SCENE_MININUM_INTERVAL:
-				msg = "Invalid interval value {value}".format(value=self._interval, minValue=constants.SCENE_MININUM_INTERVAL)
-				logger.error(msg)
+				msg = "Invalid interval value {value}; has to be integer, minimum is {minValue}".format(value=self._interval, minValue=constants.SCENE_MININUM_INTERVAL)
+				logger.error(self, msg)
 				raise RuntimeError(msg)
 	def activate(self, silent=False, params=None):
 		super().activate(silent, params)
@@ -407,6 +407,9 @@ class MapRegionScene(IntervalScene):
 			self.playerPosition = [int(self.width / 2), int(self.height / 2)]
 		eventManager.post(eventManager.CHARACTER_SPAWN, {"scene": self, "position": self.playerPosition})
 
+	def describe(self):
+		self.speechDescription = " ({position})".format(position=self.playerPosition)
+		super().describe()
 	def event_will_scene_stack(self, evt):
 		self.stopMoving()
 	
@@ -489,6 +492,20 @@ class MapRegionScene(IntervalScene):
 		if newPos[0] == 0 or newPos[0] == self.width or newPos[1] == 0 or newPos[1] == self.height:
 			eventManager.post(eventManager.CHARACTER_HIT, {"type": "wall"})
 			return False
+		import objectManager
+
+		objs = objectManager.getNearestObjects(newPos, self.player, self.objects)
+		if objs is not None and len(objs) > 0:
+			distance,obj = objs[0]
+			pos = obj.getPosition()
+			size = obj.getSize()
+			if newPos[0] > pos[0] - size[0] and newPos[0] < pos[0] + size[0] and newPos[1] > pos[1] - size[1] and newPos[1] < pos[1] + size[1]:
+				eventManager.post(eventManager.OBJECT_HIT, {"character": self.player,
+																										"obj": obj})
+				return False
+			
+			
+			
 		return True # we can move this character in the desired direction.
 	
 	def event_character_move(self, evt):
@@ -529,6 +546,7 @@ class MapRegionScene(IntervalScene):
 		objs = objectManager.getNearestObjects(self.playerPosition, self.player, self.objects)
 		if objs is not None and len(objs) > 0:
 			distance,obj = objs[0] # takes the nearest object
+			logger.info(self, "{name} at {distance}".format(name=obj, distance=distance))
 			if distance <= obj.getInteractionDistance():
 				if obj.onInteract(self, self.player) is True:
 					self.stopMoving()
