@@ -28,7 +28,7 @@ class AudioManager(object):
 	fmod = None
 
 		
-	def __init__(self):
+	def __init__(self, config):
 		"""Initializes the AudioManager with the help of L{GameConfig} object."""
 		eventManager.addListener(self)
 		try:
@@ -40,7 +40,10 @@ class AudioManager(object):
 		except Exception as e:
 			logger.exception(self, "Failed to load FMOD library: {e}".format(e=e), e)
 			raise e
-				
+		self.fadeInterval = gameconfig.getValue(config, "fade-interval", int, {"defaultValue": constants.AUDIO_FADE_INTERVAL, "minValue": 1})
+		self.fadeTicks = 0
+		self.stereoWidth = gameconfig.getValue(config, "stereo-field-width", int, {"defaultValue": constants.AUDIO_STEREO_FIELD_WIDTH, "minValue": 30, "maxValue": 100})
+		self.stereoWidth /= 100
 		for s in gameconfig.getSoundResources():
 			logger.info(self, "Loading {name} ({file})".format(name=s["name"], file=s["file"]))
 			try:
@@ -48,8 +51,6 @@ class AudioManager(object):
 				self.soundMap[s["name"]] = snd
 			except Exception as e:
 				logger.exception(self, "Failed to load {file}: {exception}".format(file=s["file"], exception=e), e)
-		self.stereoWidth = gameconfig.getValue(None, "stereo-field-width", int, {"defaultValue": 95, "minValue": 30, "maxValue": 100})
-		self.stereoWidth /= 100
 		global _instance
 
 		_instance = self
@@ -184,20 +185,22 @@ class AudioManager(object):
 		now = event.get("time", 0)
 		if len(effects.timeEffects) == 0:
 			core.stopAnimation()
-		for effect in effects.timeEffects:
-			if isinstance(effect, effects.VolumeEffect):
-				# logger.info(self, "{x} Adjusting {name}(volume={volume}, step={step})".format(x=len(effects.timeEffects), name=effect.name, volume=effect.curVolume, step=effect.stepValue))
-				effect.curVolume += effect.stepValue
-				if effect.sound is None or effect.sound.channel is None:
-					effects.timeEffects.remove(effect)
-					continue
+		if core.currentTicks - self.fadeTicks > self.fadeInterval:
+			self.fadeTicks = core.currentTicks
+			for effect in effects.timeEffects:
+				if isinstance(effect, effects.VolumeEffect):
+					# logger.info(self, "{x} Adjusting {name}(volume={volume}, step={step})".format(x=len(effects.timeEffects), name=effect.name, volume=effect.curVolume, step=effect.stepValue))
+					effect.curVolume += effect.stepValue
+					if effect.sound is None or effect.sound.channel is None:
+						effects.timeEffects.remove(effect)
+						continue
 										
-				effect.sound.channel.volume = effect.curVolume
-				if effect.isCompleted():
-					logger.info(self, "Effect {e} completed".format(e=effect))
-					effects.timeEffects.remove(effect)
-					continue
-				effect._lastTick = now
+					effect.sound.channel.volume = effect.curVolume
+					if effect.isCompleted():
+						logger.info(self, "Effect {e} completed".format(e=effect))
+						effects.timeEffects.remove(effect)
+						continue
+					effect._lastTick = now
 		if self.fmod is not None:
 			try:
 				self.fmod.update()
@@ -205,10 +208,10 @@ class AudioManager(object):
 				logger.exception(self, "Error updating fMOD: {e}".format(e=e), e)
 				
 				
-def initialize():
+def initialize(config):
 	if _instance is None:
 		try:
-			am = AudioManager()
+			am = AudioManager(config)
 			return True
 		except Exception as e:
 			logger.exception("audio", "Error initializing audio: {exception}".format(exception=e), e)

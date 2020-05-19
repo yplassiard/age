@@ -65,7 +65,10 @@ class GameConfig(object):
 
 		def getPlayerConfig(self):
 				return self.config.get('player', None)
-		
+
+		def getGlobalAudioProperties(self):
+			return self.config.get("audio-properties", {})
+
 		def getControlResources(self):
 				try:
 						return self.config["resources"]["controls"]
@@ -179,3 +182,11 @@ def getValue(config, key, cls, attrs=None):
 		return (ret, volume)
 	return ret
 
+
+def getGlobalAudioProperties():
+	"""Returns a dictionary containing audio engine properties."""
+	global _instance
+
+	if _instance is not None:
+		return _instance.getGlobalAudioProperties()
+	return {}

@@ -1,9 +1,8 @@
 {
     "resources": {
         "sounds": [
-            {
-                "name": "error-sound",
-                "file": "error-sound.ogg"
+            {"name": "error-sound",
+             "file": "error-sound.ogg"
             },
             {"name": "menuSelect",
              "file": "menu-select.ogg"},
@@ -38,9 +37,12 @@
             {"name": "npc-signal-sound",
              "file": "npc-signal.ogg"}
         ],
-        "stereo-field-width": "80",
         "music": [],
         "controls": {}
+    },
+    "audio-properties": {
+        "stereo-field-width": 80,
+        "fade-interval": 25
     },
     "scenes": {
         "mainmenu": "mainmenu.json"

@@ -563,7 +563,7 @@ class MapRegionScene(IntervalScene):
 		import sceneManager
 		
 
-		if sceneManager.getActiveScene() != self:
+		if sceneManager.getActiveScene() != self or core.isInAnimation():
 			return
 		if (self.isWalking and core.currentTicks - self.playerMoveTicks > constants.HERO_WALK_TIME) or (self.isRunning and core.currentTicks - self.playerMoveTicks > constants.HERO_RUN_TIME):
 			self.onWalk(self.isRunning)

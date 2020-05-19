@@ -46,7 +46,7 @@ def main():
 	speech.speak("Chargement en cours...")
 	startAnimation()
 	
-	if audio.initialize() is False:
+	if audio.initialize(gameconfig.getGlobalAudioProperties()) is False:
 		logger.error("main", "Failed to initialize sound support.")
 		return
 	if sceneManager.initialize() is False:
