@@ -34,6 +34,7 @@ class Sound(object):
 		self.file = file
 		self.initialVolume = volume
 		self.channel = None
+		self.loopCount = 0
 		self._isMusic = _isMusic
 		
 		try:
@@ -45,7 +46,13 @@ class Sound(object):
 		except Exception as e:
 			logger.error(self, "Unable to load soune: {e}".format(e=e))
 			self.snd = None
-						
+
+	def sesLooping(self, loopCount):
+		self.loopCount = loopCount
+
+	def getLooping(self):
+		return self.loopCount
+	
 	def setVolume(self, volume, pan=0.0):
 		"""Sets the volume and sound panoramic."""
 		if self.isPlaying():
@@ -93,13 +100,14 @@ class Sound(object):
 		return self.minDistance, self.maxDistance
 	
 	def play(self, paused=False):
-		if self.isPlaying():
+		if self.isPlaying() and self.loopCount == 0:
 			self.stop()
 		if self.snd is None:
 			logger.error(self, "Cannot play a not loaded sound.")
 			return False
 		try:
-			self.channel = self.snd.play(paused=True)
+			if self.channel is None:
+				self.channel = self.snd.play(paused=True)
 			# logger.info(self, "Sound started playing {chan}".format(chan=self.channel))
 			self.playing = True
 			if self.pan is not None:
@@ -108,6 +116,7 @@ class Sound(object):
 				self.channel.position = [self.position[0], 1.0, self.position[1]]
 			self.channel.volume = self.volume
 			self.channel.pitch = self.pitch
+			self.channel.loop_count = self.loopCount
 			self.channel.paused = False
 		except Exception as e:
 			logger.exception(self, "Error playing {name}: {e}".format(name=self.name, e=e), e)
@@ -125,6 +134,7 @@ class Sound(object):
 			self.channel.stop()
 			# logger.info(self, "Stopping sound.")
 			self.playing = False
+			self.channel = None
 			return True
 		return False
 	def isPlaying(self):

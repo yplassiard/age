@@ -425,6 +425,8 @@ class MapRegionScene(IntervalScene):
 
 	def describe(self):
 		self.speechDescription = " ({position})".format(position=self.playerPosition)
+		if self.cameraMode == constants.CAMERA_SUBJECTIVE:
+			self.speechDescription += ", direction {dir} degrés".format(dir=self.curAngle)
 		super().describe()
 	def event_will_scene_stack(self, evt):
 		self.stopMoving()
@@ -442,6 +444,10 @@ class MapRegionScene(IntervalScene):
 		elif self.cameraMode == constants.CAMERA_SUBJECTIVE:
 			self.cameraMode = constants.CAMERA_TOP
 			speech.speak("Mode vue de dessus")
+			self.curAngle = 0
+			eventManager.post(eventManager.AUDIO_CAMERA_CHANGE, {"cameraMode": self.cameraMode})
+			
+			self.stopMoving()
 		else:
 			logger.error(self, "Unknown camera mode")
 		

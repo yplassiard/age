@@ -153,6 +153,14 @@ class AudioManager(object):
 					
 
 
+	def event_audio_camera_change(self, evt):
+		mode = evt.get("cameraMode", None)
+		if mode is None:
+			logger.error(self, "Missing audio camera mode")
+			return True
+		if mode == constants.CAMERA_TOP:
+			self.listener.position = [0.0, 0.0, 0.0]
+	
 	def event_audio_render(self, evt):
 		scene = evt.get("scene", None)
 		listenerPos = evt.get("listener", None)

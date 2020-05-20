@@ -41,7 +41,7 @@ OBJECT_HIT = 74
 # Audio specific events
 AUDIO_RENDER = 100
 AUDIO_PLAY_3D = 101
-
+AUDIO_CAMERA_CHANGE = 102
 
 
 
@@ -86,6 +86,7 @@ eventNames = {
 
 	AUDIO_RENDER: "audio_render",
 	AUDIO_PLAY_3D: "audio_play_3d",
+	AUDIO_CAMERA_CHANGE: "audio_camera_change",
 
 }
 
