@@ -19,7 +19,8 @@ class Sound(object):
 	initialVolume = constants.AUDIO_FX_VOLUME
 	pan = 0.0
 	pitch = 1.0
-
+	position = None
+	
 	def __init__(self, fmod, name, file, volume=constants.AUDIO_FX_VOLUME, loop=False, _isMusic=False):
 		super().__init__()
 		if fmod is None:
@@ -76,7 +77,21 @@ class Sound(object):
 		if self.channel is not None:
 			return self.channel.pitch
 		return None
-		
+
+	def set3DCoordinates(self, x, y, z):
+		self.position = (x, y, z)
+		self.pan = None
+	def get3DCoordinates(self):
+		return self.position
+
+	def setDistances(self, min, max):
+		self.minDistance = min
+		self.maxDistance = max
+		if snd:
+			snd.min_max_distance = [self.minDistance, self.maxDistance]
+	def getDistances(self):
+		return self.minDistance, self.maxDistance
+	
 	def play(self, paused=False):
 		if self.isPlaying():
 			self.stop()
@@ -84,12 +99,16 @@ class Sound(object):
 			logger.error(self, "Cannot play a not loaded sound.")
 			return False
 		try:
-			self.channel = self.snd.play(paused=paused)
+			self.channel = self.snd.play(paused=True)
 			# logger.info(self, "Sound started playing {chan}".format(chan=self.channel))
 			self.playing = True
-			self.channel.position = [self.pan, 1.0, 1.0]
+			if self.pan is not None:
+				self.channel.position = [self.pan, 1.0, 1.0]
+			else:
+				self.channel.position = [self.position[0], 1.0, self.position[1]]
 			self.channel.volume = self.volume
 			self.channel.pitch = self.pitch
+			self.channel.paused = False
 		except Exception as e:
 			logger.exception(self, "Error playing {name}: {e}".format(name=self.name, e=e), e)
 			return False
@@ -97,6 +116,7 @@ class Sound(object):
 	def setPan(self, value):
 		# logger.info(self, "Pan: {value}".format(value=value))
 		self.pan = value
+		self.position = None
 		if self.channel is not None:
 			self.channel.position = [value, 1.0, 1.0]
 			

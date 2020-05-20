@@ -2,6 +2,16 @@
 
 # Defines main game constants that can be used everywhere
 
+# Main internal constants
+import math
+PI = math.pi
+DEF_PI_DIVIDE = 160
+DEF_ANGLE = (PI / DEF_PI_DIVIDE)
+
+# camera modes
+CAMERA_TOP = 1
+CAMERA_SUBJECTIVE = 2
+
 # global configuration
 CONFIG_RESOURCE_DIR = "res"
 CONFIG_DATA_DIR = "data"
@@ -35,6 +45,7 @@ DIRECTION_WEST = 3
 HERO_WALK_TIME = 500
 HERO_RUN_TIME = 300
 OBJECT_ECHO_TIME = 1000
+OBJECT_MAX_DISTANCE = 10
 CHARACTER_STAMINA_RECOVERY_TIME = 50
 # Peckables
 LOCKSTATE_LOCKED = 100

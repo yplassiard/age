@@ -38,6 +38,11 @@ OBJECT_UNLOCK = 73
 OBJECT_HIT = 74
 
 
+# Audio specific events
+AUDIO_RENDER = 100
+AUDIO_PLAY_3D = 101
+
+
 
 
 # List objects receiving custom game events.
@@ -78,6 +83,10 @@ eventNames = {
 	OBJECT_LOCK: "object_lock",
 	OBJECT_UNLOCK: "object_unlock",
 	OBJECT_HIT: "object_hit",
+
+	AUDIO_RENDER: "audio_render",
+	AUDIO_PLAY_3D: "audio_play_3d",
+
 }
 
 def addListener(obj):

@@ -12,6 +12,8 @@ class Object(object):
 	signalSound = None
 	interactDistance = -1
 	size = (1, 1)
+	minDistance = 1
+	maxDistance = 10
 	
 
 	def __init__(self, name, config):
@@ -22,6 +24,8 @@ class Object(object):
 		self.size = gameconfig.getValue(config, "size", list, {"elements": 2})
 		self.signalSound = "signal-sound"
 		self.interactDistance = gameconfig.getValue(config, "interact-distance", float, {"defaultValue": -1})
+		self.minDistance = gameconfig.getValue(config, "min-distance", float, {"defaultValue": 0.5})
+		self.maxDistance = gameconfig.getValue(config, "max-distance", float, {"defaultValue": constants.OBJECT_MAX_DISTANCE})
 		
 				
 
@@ -29,7 +33,9 @@ class Object(object):
 		"""Automatically interact with this object if the distance is below this value"""
 		return self.interactDistance
 				
-				
+	def getDistances(self):
+		return self.minDistance, self.maxDistance
+	
 	def getLogName(self):
 		return "%s(%s)" %(self.__class__.__name__, self.name)
 	def __repr__(self):

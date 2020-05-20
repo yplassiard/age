@@ -331,11 +331,15 @@ class MapRegionScene(IntervalScene):
 	playerPosition = None
 	walkSounds = []
 	runSounds = []
+	cameraMode = constants.CAMERA_TOP
+	
 	isWalking = False
 	isRunning = False
 	playerMoveTicks = 0
 	objectEchoTick = 0
-
+	curAngle = 0
+	isTurningLeft = False
+	isTurningRight = False
 	def __init__(self, name, config):
 		config["interval"] = 40
 		super().__init__(name, config)
@@ -346,6 +350,16 @@ class MapRegionScene(IntervalScene):
 		self.regionLinks = gameconfig.getValue(config, "region-links", list, {"elements": 1})
 		self.objectConfigs = gameconfig.getValue(config, "objects", list, {"defaultValue": []})
 		self.walkSounds = gameconfig.getValue(config, "walking", list, {"elements": 1, "defaultValue": []})
+		cameraModeStr = gameconfig.getValue(config, "default-camera-mode", str, {"defaultValue": "top"})
+		if cameraModeStr not in ["top", "subjective"]:
+			raise RuntimeError("The camera mode has to be set either to 'top' or 'subjective'.")
+		if cameraModeStr == "top":
+			self.cameraMode = constants.CAMERA_TOP
+		elif cameraModeStr == "subjective":
+			self.cameraMode = constants.CAMERA_SUBJECTIVE
+		else:
+			raise RuntimeError("Unknown camera mode {mode}".format(mode=cameraModeStr))
+		
 		self.objects = []
 		
 	def getLogName(self):
@@ -374,7 +388,9 @@ class MapRegionScene(IntervalScene):
 			logger.error(self, "Some objects failed to load.")
 		return ret
 		
-						
+	def getObjects(self):
+		return self.objects
+	
 	def activate(self, silent=False, params=None):
 		super().activate(silent, params)
 		self.playerPosition = None
@@ -413,6 +429,21 @@ class MapRegionScene(IntervalScene):
 	def event_will_scene_stack(self, evt):
 		self.stopMoving()
 	
+
+	def input_press_tab(self):
+		if self.cameraMode == constants.CAMERA_TOP:
+			self.cameraMode = constants.CAMERA_SUBJECTIVE
+			speech.speak("Mode subjectif")
+			eventManager.post(eventManager.AUDIO_RENDER, {"scene": self,
+																										"listener": self.playerPosition,
+																										"directionVector": [0.0, 1.0, 0.0]})
+												
+							
+		elif self.cameraMode == constants.CAMERA_SUBJECTIVE:
+			self.cameraMode = constants.CAMERA_TOP
+			speech.speak("Mode vue de dessus")
+		else:
+			logger.error(self, "Unknown camera mode")
 		
 	def input_press_action(self):
 		self.onAction()
@@ -437,6 +468,12 @@ class MapRegionScene(IntervalScene):
 		self.stopMoving()
 	def input_release_shift_right(self):
 		self.stopMoving()
+	def turnLeft(self):
+		self.isTurningLeft = True
+
+	def turnRight(self):
+		self.isTurningRight = True
+		self.isTurningLeft = False
 		
 	def input_press_up(self):
 		self.onWalk(False, constants.DIRECTION_NORTH)
@@ -445,10 +482,20 @@ class MapRegionScene(IntervalScene):
 		self.onWalk(False, constants.DIRECTION_SOUTH)
 		
 	def input_press_right(self):
-		self.onWalk(False, constants.DIRECTION_EAST)
+		if self.cameraMode == constants.CAMERA_TOP:
+			self.onWalk(False, constants.DIRECTION_EAST)
+		else:
+			self.turnRight()
+			
 
 	def input_press_left(self):
-		self.onWalk(False, constants.DIRECTION_WEST)
+		if self.cameraMode == constants.CAMERA_TOP:
+			self.onWalk(False, constants.DIRECTION_WEST)
+		elif self.cameraMode == constants.CAMERA_SUBJECTIVE:
+			self.turnLeft()
+		else:
+			logger.error(self, "Unhandled camera mode")
+			
 
 	def input_release_up(self):
 		self.stopMoving()
@@ -470,6 +517,8 @@ class MapRegionScene(IntervalScene):
 	def stopMoving(self):
 		self.isRunning = False
 		self.isWalking = False
+		self.isTurningRight = False
+		self.isTurningLeft = False
 		self.direction = None
 		logger.info(self, "Player stopped moving.")
 		
@@ -565,6 +614,21 @@ class MapRegionScene(IntervalScene):
 
 		if sceneManager.getActiveScene() != self or core.isInAnimation():
 			return
+		if self.cameraMode == constants.CAMERA_SUBJECTIVE and (self.isTurningLeft or self.isTurningRight):
+			shouldUpdateListener = False
+			if self.isTurningLeft:
+				self.curAngle += 1
+				shouldUpdateListener = True
+			elif self.isTurningRight:
+				self.curAngle -= 1
+				shouldUpdateListener = True
+			if shouldUpdateListener:
+				dirX = math.cos(self.curAngle * constants.DEF_ANGLE)
+				dirY = math.sin(self.curAngle * constants.DEF_ANGLE)
+				eventManager.post(eventManager.AUDIO_RENDER, {"scene": self,
+																											"listener": self.playerPosition,
+																											"directionVector": [dirX, dirY]})
+				
 		if (self.isWalking and core.currentTicks - self.playerMoveTicks > constants.HERO_WALK_TIME) or (self.isRunning and core.currentTicks - self.playerMoveTicks > constants.HERO_RUN_TIME):
 			self.onWalk(self.isRunning)
 		if core.currentTicks - self.objectEchoTick > constants.OBJECT_ECHO_TIME:
@@ -585,8 +649,12 @@ class MapRegionScene(IntervalScene):
 				if volume <= 0:
 					return
 				# logger.info(self, "Nearest object {obj} at {distance}, vol={volume}, pitch={pitch}, pan={pan}".format(obj=obj, distance=distance, pitch=diffY, pan=diffX, volume=volume))
-				audio.play(obj.getSignalSound(), volume, diffX, pitch=audio.computePitch(0.7, 1.3, diffY))
+				if self.cameraMode == constants.CAMERA_TOP:
+					audio.play(obj.getSignalSound(), volume, diffX, pitch=audio.computePitch(0.7, 1.3, diffY))
 			self.objectEchoTick = core.currentTicks
+			if self.cameraMode == constants.CAMERA_SUBJECTIVE:
+				eventManager.post(eventManager.AUDIO_PLAY_3D, {"scene": self})
+				
 			
 	def getGroundTypeSound(self):
 		import random

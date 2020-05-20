@@ -153,6 +153,36 @@ class AudioManager(object):
 					
 
 
+	def event_audio_render(self, evt):
+		scene = evt.get("scene", None)
+		listenerPos = evt.get("listener", None)
+		dirVector = evt.get("directionVector", None)
+		if scene is None or listenerPos is None or dirVector is None:
+			logger.error(self, "cannot render, missing scene or listener position")
+			return False
+		for obj in scene.getObjects():
+			soundStr = obj.getSignalSound()
+			snd = self.soundMap.get(soundStr, None)
+			if snd is not None:
+				snd.set3DCoordinates(obj.position[0], obj.position[1], 1.0)
+				# snd.setMinMaxDistance(obj.getDistances())
+		self.listener.position = [listenerPos[0], 1.0, listenerPos[1]]
+		self.listener.forward = [dirVector[0], 0.0, dirVector[1]]
+		self.listener.up = [0.0, 1.0, 0.0]
+		
+
+	def event_audio_play_3d(self, evt):
+		scene = evt.get("scene", None)
+		if scene is None:
+			logger.error(self, "Failed to play 3D sounds without a scene")
+			return True
+		for obj in scene.getObjects():
+			signalSoundStr = obj.getSignalSound()
+			snd = self.soundMap.get(signalSoundStr, None)
+			if snd:
+				snd.play() # position is already set.
+		# self.fmod.update()
+
 	def event_stack_scene(self, evt):
 		scene = evt.get("scene", None)
 		sceneMusics = scene.getSceneMusics()
