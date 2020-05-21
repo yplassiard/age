@@ -177,6 +177,7 @@ class AudioManager(object):
 		self.listener.position = [listenerPos[0], 1.0, listenerPos[1]]
 		self.listener.forward = [dirVector[0], 0.0, dirVector[1]]
 		self.listener.up = [0.0, 1.0, 0.0]
+		self.listener.velocity = [0.0, 0.0, 0.0]
 		
 
 	def event_audio_play_3d(self, evt):

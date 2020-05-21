@@ -426,7 +426,7 @@ class MapRegionScene(IntervalScene):
 	def describe(self):
 		self.speechDescription = " ({position})".format(position=self.playerPosition)
 		if self.cameraMode == constants.CAMERA_SUBJECTIVE:
-			self.speechDescription += ", direction {dir} degrés".format(dir=self.curAngle)
+			self.speechDescription += ", direction {dir} degrés".format(dir=self.curAngle / constants.DEF_PI_DIVIDE * 180)
 		super().describe()
 	def event_will_scene_stack(self, evt):
 		self.stopMoving()
@@ -436,9 +436,11 @@ class MapRegionScene(IntervalScene):
 		if self.cameraMode == constants.CAMERA_TOP:
 			self.cameraMode = constants.CAMERA_SUBJECTIVE
 			speech.speak("Mode subjectif")
+			self.curAngle = 80
+			eventManager.post(eventManager.AUDIO_CAMERA_CHANGE, {"cameraMode": self.cameraMode})
 			eventManager.post(eventManager.AUDIO_RENDER, {"scene": self,
 																										"listener": self.playerPosition,
-																										"directionVector": [0.0, 1.0, 0.0]})
+																										"directionVector": [0.0, 1.0]})
 												
 							
 		elif self.cameraMode == constants.CAMERA_SUBJECTIVE:
@@ -628,6 +630,7 @@ class MapRegionScene(IntervalScene):
 			elif self.isTurningRight:
 				self.curAngle -= 1
 				shouldUpdateListener = True
+			self.curAngle %= 2 * constants.DEF_PI_DIVIDE
 			if shouldUpdateListener:
 				dirX = math.cos(self.curAngle * constants.DEF_ANGLE)
 				dirY = math.sin(self.curAngle * constants.DEF_ANGLE)
