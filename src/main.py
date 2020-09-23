@@ -4,7 +4,6 @@ import core
 import speech
 		
 if __name__ == '__main__':
-	print("Test")
 	try:
 		core.main()
 	except KeyboardInterrupt:

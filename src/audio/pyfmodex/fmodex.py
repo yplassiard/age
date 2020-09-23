@@ -15,7 +15,9 @@ elif system == "darwin":
     path = os.path.join(gameconfig.getLibraryPath(), "libfmod.dylib")
     _dll = CDLL(path)
 else:
-    raise RuntimeError("System {platform} {arch} not yet supported".format(platform=os.name, arch=arch))
+    path = path = os.path.join(gameconfig.getLibraryPath(), "libfmod.so")
+    _dll = CDLL(path)
+
 
 from . import globalvars
 globalvars.dll = _dll
