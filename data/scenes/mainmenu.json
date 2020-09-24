@@ -3,11 +3,12 @@
     "name": "mainmenu",
     "type": "menu",
     "speak-title": true,
-    "choices": ["Start new adventure", "Continue adventure", "Exit"],
+    "choices": ["Démarrer une nouvelle aventure", "Continuer", "Options", "Quitter"],
     "links": {
         "0": "new_adventure",
         "1": "continue_adventure",
-        "2": "__quit"
+        "2": "userOptions",
+        "3": "__quit"
     },
     "select-sound": "menuSelect",
     "validate-sound": "menuValidate",

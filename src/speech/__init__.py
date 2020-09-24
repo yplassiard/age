@@ -13,6 +13,15 @@ class SpeechSupport(object):
                 pass
         def isActive(self):
                 return False
+        def hasVoiceSelectionSupport(self):
+                return False
+        def hasVolumeSelectionSupport(self):
+                return False
+        def hasRateSelectionSupport(self):
+                return False
+        def hasPitchSelectionSupport(self):
+                return False
+
         def getLogName(self):
                 raise NotImplementedError
 
@@ -70,3 +79,8 @@ def getLogName():
 	else:
 		return "speech"
 	
+
+def getInstance():
+        global _instance
+
+        return _instance
