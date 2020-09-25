@@ -35,7 +35,8 @@ class Scene(object):
       self.links = config.get("links", {})
       self.speechName = gameconfig.getValue(config, "speech-name", str, {"defaultValue": self.name})
       self.speechDescription = gameconfig.getValue(config, "speech-description", str, {"mandatory": False, "defaultValue": ""})
-
+      self.nextScene = gameconfig.getValue(config, "nextScene", str, {"mandatory": False, "defaultValue": ""})
+      
       self.musics = gameconfig.getValue(config, "musics", list, {"defaultValue": []})
       for music in self.musics:
         music["scene"] = self
@@ -49,7 +50,7 @@ class Scene(object):
     return "%s(%s)" %(self.__class__.__name__, self.name)
     
   def getNextScene(self):
-    raise NotImplementedError("This scene is terminal.")
+    return self.nextScene
   def activate(self, silent=False, params=None):
     if self.focused:
       return True
@@ -458,6 +459,11 @@ class MapRegionScene(IntervalScene):
   def input_press_action(self):
     self.onAction()
 
+  def input_press_quit(self):
+    import sceneManager
+
+    sceneManager.stackScene("inGameMenu")
+    
   def input_press_shift_up(self):
     self.onWalk(True, constants.DIRECTION_NORTH)
 

@@ -107,24 +107,23 @@ class SceneManager(object):
 
 
   def leave(self, silentLeaving=False, params=None):
-    if len(self.stack) > 0:
-      s = self.stack[-1]
+    activeScene = self.getActiveScene()
+    nextScene = activeScene.getNextScene()
+    if nextScene == "__unstack" and len(self.stack) > 0:
       if len(self.stack) > 2:
-        active = self.stack[-2]
+        neutScene = self.stack[-2]
       else:
-        active = self.activeScene
-      eventManager.post(eventManager.SCENE_UNSTACK, {"scene": s, "active": active})
+        nextScene = self.activeScene
+      eventManager.post(eventManager.SCENE_UNSTACK, {"scene": activeScene, "active": nextScene})
       return
-    if self.activeScene is not None:
-      nextScene = self.activeScene.getNextScene()
-      if nextScene is None:
-        return
-      if nextScene == '__quit':
-        eventManager.post(eventManager.QUIT_GAME)
-      else:
-        if self.load(nextScene, params=params) is False:
-          speech.speak("scene {name} not created yet.".format(name=nextScene))
-                    
+    elif nextScene is None:
+      return
+    if nextScene == '__quit':
+      eventManager.post(eventManager.QUIT_GAME)
+    elif self.load(nextScene, params=params) is False:
+      speech.speak("scene {name} not created yet.".format(name=nextScene))
+    else:
+      return False
   def getActiveScene(self):
     if len(self.stack) > 0:
       return self.stack[-1]

@@ -85,7 +85,8 @@
              "je regrette, jamais entendu parler.",
              "Ceci dit ne vous éloignez pas trop. C'est dangereux là-dehors."
          ],
-         "interval": 30
+         "interval": 30,
+         "nextScene": "__unstack"
         },
         {"name": "npc1_hit",
          "type": "storytext",
@@ -93,7 +94,8 @@
              "Hey!",
              "Regardez un peu où vous mettez les pieds!"
          ],
-         "interval": 30
+         "interval": 30,
+         "nextScene": "__unstack"
         }
     ]
 }
