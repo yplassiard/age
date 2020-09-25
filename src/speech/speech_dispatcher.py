@@ -51,8 +51,9 @@ class SPDClient(speech.SpeechSupport):
     for mod in self._voices:
       for voice in mod["voices"]:
         voices.append({"name": "{module} {name}".format(module=mod["module"], name=voice[0]),
-                 "id": voice[0],
-                 "language": voice[1]})
+                       "id": voice[0],
+                       "module": mod,
+                       "language": voice[1]})
     return voices
   def selectVoice(self, voice):
     mod = voice.get("module", None)
@@ -60,16 +61,18 @@ class SPDClient(speech.SpeechSupport):
     if mod is None or id is None:
       logger.error(self, "Unable to set to voice %s" %(voice))
       return False
-    self._client.set_output_module(mod)
+    logger.debug(self, "Setting output module to %s, voice to %s" %(mod['module'], id))
+    
+    self._client.set_output_module(mod['module'])
     self._client.set_synthesis_voice(id)
     self.speak(voice["name"])
     return True
   def speak(self, msg):
-    logger.error(self, "Speak(%s)" %(msg))
-    self._client.stop()
+    logger.debug(self, "Speak(%s)" %(msg))
+    self._client.cancel()
     self._client.say(msg)
   def cancelSpeech(self):
-    self._client.stop()
+    self._client.cancel()
 
   def isActive(self):
     return self._client is not None

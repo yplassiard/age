@@ -21,6 +21,11 @@ SCENE_INTERVAL_TICK = 15
 SCENE_STACK = 16
 SCENE_UNSTACK = 17
 
+# Menu Scene
+MENU_OPTION_CHANGE = 20
+MENU_SELECT = 21
+MENU_ITEM_CHANGE = 22
+
 # character specific events
 CHARACTER_SPAWN = 50
 CHARACTER_MOVE = 51
@@ -70,7 +75,12 @@ eventNames = {
 	SCENE_UNSTACK: "scene_unstack",
 	QUIT_GAME: "quit_game",
 	PAUSE_GAME: "pause_game",
-	
+
+
+        MENU_OPTION_CHANGE: "menu_option_changed",
+        MENU_ITEM_CHANGE: "menu_item_changed",
+        MENU_SELECT: "menu_select",
+        
 	CHARACTER_SPAWN: "character_spawn",
 	CHARACTER_MOVE: "character_move",
 	CHARACTER_ATTRIBUTE_CHANGE: "character_attribute_change",
