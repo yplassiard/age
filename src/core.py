@@ -36,7 +36,7 @@ def main():
   global currentTicks, _inAnimation
     
   logger.initialize()
-  if gameconfig.initialize("a3g-engine.json") is False:
+  if gameconfig.initialize("age.json") is False:
     logger.error("main", "Invalid configuration.")
     return
   if speech.initialize() is False:

@@ -18,7 +18,7 @@ _logComponents = {
 class Logger(object):
   """Log events add information while the game is running."""
 
-  logFile = "a3g-engine.log"
+  logFile = "age.log"
   logIO = None
   name = 'logger'
 

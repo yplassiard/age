@@ -1,5 +1,5 @@
-# A3G-Engine
-## Accessible Action-Adventure Game Engine
+# AGE
+## Audio Game Engine
 ## Introduction
 This project aims to create a game engine for adventure-action games, with a very strong focus on accessibility and audio-only interface.
 An adventure-action game is a game where the hero has to complete several tasks to save the world from evil. Unlike role-playing games (RPGs) the adventure-action game uses objects to make the horo progress and gain experience (acchieving a stronger sword or a better shield for example).
@@ -17,7 +17,7 @@ An adventure-action game is a game where the hero has to complete several tasks 
 $ python -m pip install pygaame py-flags
 ```
 - Finally, clone or download the sources from this repository, unzip them if needed.
-- Open a command prompt and go to the newly created "a3g-engine" directory
+- Open a command prompt and go to the newly created "age" directory
 - Finally run:
 ```
 python src\main.py
@@ -37,11 +37,11 @@ python3 -m pip install pygame py-flags
 ```
 - Clone the GitHub repository :
 ```
-git clone https://github.com/YPlassiard/a3g-engine
+git clone https://github.com/YPlassiard/age
 ```
 - Change to the newly created directory and run the game:
 ```
-cd a3g-engine
+cd age
 python3 src/main.py
 ```
 
