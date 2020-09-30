@@ -7,15 +7,15 @@ system = platform.system().lower()
 arch = platform.architecture()[0]
 if os.name == 'nt':
     if arch == "32bit":
-        path = os.path.join(gameconfig.getLibraryPath(), "fmod.dll")
+        path = os.path.join(gameconfig.get_library_path(), "fmod.dll")
     else:
-        path = os.path.join(gameconfig.getLibraryPath(), "fmod64.dll")
+        path = os.path.join(gameconfig.get_lbrary_path(), "fmod64.dll")
     _dll = windll.LoadLibrary(path)
 elif system == "darwin":
-    path = os.path.join(gameconfig.getLibraryPath(), "libfmod.dylib")
+    path = os.path.join(gameconfig.get_library_path(), "libfmod.dylib")
     _dll = CDLL(path)
 else:
-    path = path = os.path.join(gameconfig.getLibraryPath(), "libfmod.so")
+    path = path = os.path.join(gameconfig.get_library_path(), "libfmod.so")
     _dll = CDLL(path)
 
 

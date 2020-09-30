@@ -7,7 +7,7 @@ from AppKit import NSSpeechSynthesizer
 
 import speech
 import logger
-import eventManager
+import event_manager
 import threading
 import queue
 import time
@@ -53,7 +53,7 @@ class NSSpeech(speech.SpeechSupport):
     def __init__(self):
         self.ss = NSSpeechSynthesizer.alloc().init()
         self.statusThread = SpeechThread(self.ss)
-        eventManager.addListener(self)
+        event_manager.addListener(self)
         self.statusThread.start()
 
     def speak(self, text):

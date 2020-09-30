@@ -1,7 +1,7 @@
 # *-* config: utf8 *-*
 
 import scene
-import sceneManager
+import scene_manager
 
 class Scene(scene.MenuScene):
     name = 'sceneloader'
@@ -21,7 +21,7 @@ class Scene(scene.MenuScene):
         idx = 0
         self.choices = []
         self.links = {}
-        for name in sceneManager._instance.scenes:
+        for name in scene_manager._instance.scenes:
             self.links[str(idx)] = name
             self.choices.append(name)
             idx += 1

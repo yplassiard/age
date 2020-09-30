@@ -1,14 +1,20 @@
 # *-* coding: utf-8 *-*
+"""AGE -- AudioGame Engine
+Main program
+"""
+
+import traceback
 
 import core
 import speech
-		
+
+
 if __name__ == '__main__':
-	try:
-		core.main()
-	except KeyboardInterrupt:
-		speech.terminate()
-	except Exception as e:
-		print("Uncaught exception: {e}".format(e=e))
-		import traceback
-		traceback.print_tb(e.__traceback__)
+    try:
+        core.initialize()
+        core.run()
+    except KeyboardInterrupt:
+        speech.terminate()
+    except Exception as ex:
+        print("Uncaught exception: {e}".format(e=ex))
+        traceback.print_tb(ex.__traceback__)

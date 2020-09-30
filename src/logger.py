@@ -5,14 +5,14 @@ import pygame
 import sys
 import traceback
 
-import eventManager
+import event_manager
 
 
 """Log Categories defines, for each component, the level we want to log."""
 _logComponents = {
-  "sceneManager": 100,
+  "scene_manager": 100,
   "SpeechDispatcher": 100,
-  "eventManager": 100,
+  "event_manager": 100,
 }
 
 class Logger(object):
@@ -23,7 +23,7 @@ class Logger(object):
   name = 'logger'
 
   def __init__(self, file=None):
-    eventManager.addListener(self)
+    event_manager.add_listener(self)
     self.ticks = pygame.time.get_ticks()
     if file is not None:
       self.logFile = file
@@ -59,7 +59,7 @@ class Logger(object):
       systemName = system
     else:
       try:
-        systemName = system.getLogName()
+        systemName = system.get_log_name()
       except:
         systemName = system.__class__.__name__
     logLevel = _logComponents.get(systemName, 30)

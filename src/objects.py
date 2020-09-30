@@ -3,7 +3,7 @@
 import logger
 import constants
 import gameconfig
-import eventManager
+import event_manager
 
 class Object(object):
 	"""Base class for all objects present within the game."""
@@ -19,13 +19,13 @@ class Object(object):
 	def __init__(self, name, config):
 		self.name = name
 		self.logName = "Object(%s)" %(self.name)
-		eventManager.addListener(self)
-		self.position = gameconfig.getValue(config, "position", list, {"elements": 2})
-		self.size = gameconfig.getValue(config, "size", list, {"elements": 2})
+		event_manager.add_listener(self)
+		self.position = gameconfig.get_value(config, "position", list, {"elements": 2})
+		self.size = gameconfig.get_value(config, "size", list, {"elements": 2})
 		self.signalSound = "signal-sound"
-		self.interactDistance = gameconfig.getValue(config, "interact-distance", float, {"defaultValue": -1})
-		self.minDistance = gameconfig.getValue(config, "min-distance", float, {"defaultValue": 0.5})
-		self.maxDistance = gameconfig.getValue(config, "max-distance", float, {"defaultValue": constants.OBJECT_MAX_DISTANCE})
+		self.interactDistance = gameconfig.get_value(config, "interact-distance", float, {"defaultValue": -1})
+		self.minDistance = gameconfig.get_value(config, "min-distance", float, {"defaultValue": 0.5})
+		self.maxDistance = gameconfig.get_value(config, "max-distance", float, {"defaultValue": constants.OBJECT_MAX_DISTANCE})
 		
 				
 
@@ -63,7 +63,7 @@ class Seizable(Object):
 	
 	def __init__(self, name, config):
 		super().__init__(name, config)
-		self.quantity = gameconfig.getValue(config, "quantity", int, {"defaultValue": 1,
+		self.quantity = gameconfig.get_value(config, "quantity", int, {"defaultValue": 1,
 																																			"minValue": 1})
 				
 	def use(self, target):
@@ -75,12 +75,12 @@ class Openable(Object):
 	"""This object can be opened (like doors or chests)"""
 	def __init__(self, name, config):
 		super().__init__(name, config)
-		self.locked = gameconfig.getValue(config, 'locked', bool, {"defaultValue": False})
+		self.locked = gameconfig.get_value(config, 'locked', bool, {"defaultValue": False})
 		if self.locked:
 			self.lockState = constants.LOCKSTATE_LOCKED
 		else:
 			self.lockState = constants.LOCKSTATE_UNLOCKED
-		self.unlockers = gameconfig.getValue(config, "unlockers", list, {"defaultValue": [],
+		self.unlockers = gameconfig.get_value(config, "unlockers", list, {"defaultValue": [],
 																																		 "elements": 0})
 
 				
@@ -93,7 +93,7 @@ class Openable(Object):
 			unlocker = objectManager.getObject(unlockerStr)
 			if unlocker is not None and unlocker.name == obj.name and issubclass(unlocker, Key):
 				self.lockState = constants.LOCKSTATE_UNLOCKED
-				eventManager.post(eventManager.OBJECT_UNLOCK, {"container": self,
+				event_manager.post(event_manager.OBJECT_UNLOCK, {"container": self,
 																											 "unlocker": unlocker})
 				audio.play(self.unlockSound, self.unlockSoundVolume)
 				return True
@@ -144,7 +144,7 @@ class Key(Seizable):
 	
 	def __init__(self, name, config):
 		super().__init__(name, config)
-		self.target = gameconfig.getValue(config, "target", str, {"defaultValue": None})
+		self.target = gameconfig.get_value(config, "target", str, {"defaultValue": None})
 		if self.target is None:
 			raise RuntimeError("Key({name}) without any target to unlock.".format(name=name))
 		self.signalSound = "key-signal-sound"
@@ -178,23 +178,23 @@ i.e when using this object."""
 	def __init__(self, name, config):
 		super().__init__(name, config)
 		self.size = (1,1)
-		scene = gameconfig.getValue(config, "scene", str, {"defaultValue": None})
-		interact = gameconfig.getValue(config, "auto-interact", str, {"defaultValue": 'never'})
+		scene = gameconfig.get_value(config, "scene", str, {"defaultValue": None})
+		interact = gameconfig.get_value(config, "auto-interact", str, {"defaultValue": 'never'})
 		if interact not in ["never", "once", "always"]:
 			raise RuntimeError("auto-interact value {v} should be one of 'never', 'once', 'always'".format(v=interact))
 		self.autoInteract = interact
 		if scene is None:
 			raise RuntimeError("No story scene configured for this NPC.")
-		import sceneManager
-		if sceneManager.sceneExists(scene) is False:
+		import scene_manager
+		if scene_manager.sceneExists(scene) is False:
 			logger.error(self, "{scene} not found.".format(scene=scene))
 			raise RuntimeError("Invalid NPC configuration: Scene not found")
 		self.storyScene = scene
-		self.signalSound = gameconfig.getValue(config, "signal-sound", str)
-		self.hitMax = gameconfig.getValue(config, "hit-count", int, {"defaultValue": -1})
+		self.signalSound = gameconfig.get_value(config, "signal-sound", str)
+		self.hitMax = gameconfig.get_value(config, "hit-count", int, {"defaultValue": -1})
 		self.hitCount = 0
-		self.hitScene = gameconfig.getValue(config, "hit-scene", str, {"defaultValue": None})
-		self.hitSound = gameconfig.getValue(config, "hit-sound", str)
+		self.hitScene = gameconfig.get_value(config, "hit-scene", str, {"defaultValue": None})
+		self.hitSound = gameconfig.get_value(config, "hit-sound", str)
 		self.interactDistance = 0
 		
 
@@ -214,18 +214,18 @@ i.e when using this object."""
 	def event_did_object_hit(self, evt):
 		if self.hitMax != -1 and self.hitCount == self.hitMax:
 			self.hitCount = 0
-			import sceneManager
+			import scene_manager
 
-			if sceneManager.sceneExists(self.hitScene) is False:
+			if scene_manager.sceneExists(self.hitScene) is False:
 				logger.error(self, "{scene} does not exist".format(scene=self.hitScene))
 				return False
-			sceneManager.stackScene(self.hitScene)
+			scene_manager.stackScene(self.hitScene)
 		return True
 	
 	def use(self, target):
 		if self.storyScene is not None:
-			import sceneManager
-			sceneManager.stackScene(self.storyScene)
+			import scene_manager
+			scene_manager.stackScene(self.storyScene)
 
 						
 class Enemy(Object):
@@ -234,7 +234,7 @@ class Enemy(Object):
 	
 	def __init__(self, name, config):
 		super().__init__(name, config)
-		self.health = gameconfig.getValue(config, "health", int, {"minValue": 1,
+		self.health = gameconfig.get_value(config, "health", int, {"minValue": 1,
 																															"defaultValue": constants.ENEMY_DEFAULT_HEALTH})
 		self.signalSound = "enemy-signal-sound"
 		

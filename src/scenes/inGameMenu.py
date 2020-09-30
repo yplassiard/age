@@ -1,7 +1,7 @@
 # *-* config: utf8 *-*
 
 import scene
-import sceneManager
+import scene_manager
 
 class Scene(scene.MenuScene):
     name = 'inGameMenu'
