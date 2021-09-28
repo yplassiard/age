@@ -77,7 +77,7 @@ class AGE():
         """
 
         logger.initialize()
-        if gameconfig.initialize("a3g-engine.json") is False:
+        if gameconfig.initialize("age.json") is False:
             logger.error("main", "Invalid configuration.")
             return
         if speech.initialize() is False:

@@ -12,7 +12,7 @@ class NVDASupport(speech.SpeechSupport):
 	nvdaLibrary = None
 	
 	def __init__(self):
-		path = os.path.join(gameconfig.getLibraryPath(), "nvdaControllerClient.dll")
+		path = os.path.join(gameconfig.get_library_path(), "nvdaControllerClient.dll")
 		logger.info(self, "Trying to connect to NVDA using {path}".format(path=path))
 		self.nvdaLibrary = windll.LoadLibrary(path)
 		ret = self.nvdaLibrary.nvdaController_testIfRunning()
