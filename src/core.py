@@ -123,6 +123,7 @@ class AGE():
                 self.current_ticks = pygame.time.get_ticks()
                 event_manager.post(event_manager.SCENE_INTERVAL_TICK, {"time": self.current_ticks})
                 old_time = now
+            time.sleep(0.01)
         logger.info("main", "Exiting game.")
         speech.terminate()
         pygame.quit()

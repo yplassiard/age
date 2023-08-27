@@ -16,5 +16,5 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         speech.terminate()
     except Exception as ex:
-        print("Uncaught exception: {e}".format(e=ex))
+        print(f"Uncaught exception: {ex}")
         traceback.print_tb(ex.__traceback__)

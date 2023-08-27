@@ -2,7 +2,7 @@
     "scenes": [
         {
             "name": "new_adventure",
-            "interval": 30,
+            "interval": 500,
             "type": "storytext",
             "story": [
                 "Pitié...",

@@ -228,7 +228,7 @@ class SceneManager():
                 self._intervalScenes.pop(idx)
                 return
             idx += 1
-        logger.error(self, "Failed to remove scene from interval scenes: {name}".format(name=my_scene.name))
+        logger.error(self, f"Failed to remove scene from interval scenes: {my_scene.name}")
 
     def event_scene_interval_tick(self, evt):
         """A tick is received to be dispatched tothe active scene, if it implements intervals."""
@@ -241,17 +241,17 @@ class SceneManager():
                     logger.exception(self, "Failed to execute {cls}.event_interval: {exception}".format(cls=interval_scene.__class__.__name__, exception=ex), ex)
                 interval_scene.set_next_tick(now)
     def on_key_down(self, event):
-        """ A key is pressed"""
+        """A key is pressed"""
         action = inputHandler.action(event)
         if action is None:
             return False
-        return self.execute("input_press_%s" % action)
+        return self.execute(f"input_press_{action}")
     def on_key_up(self, event):
         """Key has been released."""
         action = inputHandler.action(event)
         if action is None:
             return False
-        return self.execute("input_release_%s" % action)
+        return self.execute(f"input_release_{action}")
     def execute(self, script, data=None, target=None):
         """Executes the given script within an object."""
         if target is None:

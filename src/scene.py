@@ -130,9 +130,6 @@ Note: This event is not called when the scene is not active.
         """Returns the actual tick"""
         return self._next_tick
 
-    def update_next_tick(self, tick):
-        self._next_tick = tick
-        
     def activate(self, silent=False, params=None):
         super().activate(silent, params)
         event_manager.post(event_manager.SCENE_INTERVAL_ACTIVATE, {"scene": self})

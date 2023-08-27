@@ -1,23 +1,33 @@
 # *-* coding: utf-8 *-*
+"""
+gameconfig
+Interface to read and extract values from a engine configuration
+"""
 
-import io, os, platform, sys
+import io
+import os
+import platform
+import sys
 import json
 import logger
 import constants
 
-_instance = None
+_INSTANCE = None
 
 class GameConfig():
     """Loads the engine configuration file and provides methods to get/set config values."""
     config = None
     def __init__(self, file):
+        """constructor"""
         self.file = file
         sys.path.append(self.get_library_path())
+
     def init(self):
+        """Initializes configuration"""
         try:
-            fileObject = io.FileIO(self.file)
-            data = fileObject.readall()
-            fileObject.close()
+            file_object = io.FileIO(self.file)
+            data = file_object.readall()
+            file_object.close()
             self.config = json.loads(data)
             return True
         except Exception as ex:
@@ -25,13 +35,15 @@ class GameConfig():
             return False
 
     def get_sound_resources(self):
+        """retrieves all sound resources"""
         try:
             return self.config["resources"]["sounds"]
-        except KeyError as ex:
+        except KeyError:
             logger.error(self, "No sound resources declared")
         return None
 
     def get_music_resources(self):
+        """Retrieves all music resources"""
         try:
             return self.config["resources"]["music"]
         except KeyError:
@@ -39,6 +51,7 @@ class GameConfig():
         return None
 
     def get_scene_configuration(self, name):
+        """Retrieves a specific scene configuration"""
         if self.config.get("scenes", None) is None:
             return None
         scene_config = self.config["scenes"].get(name, None)
@@ -47,27 +60,33 @@ class GameConfig():
         if isinstance(scene_config, str):
             return self.load_scene_configuration(scene_config)
         return None
+
     def load_scene_configuration(self, json_file):
+        """Loads a configuration file"""
         file = os.path.join(os.path.abspath("."), "data", "scenes", json_file)
         try:
             conf = io.FileIO(file)
             json_config = json.load(conf)
         except Exception as ex:
-            logger.error(self, "Failed to load {file}: {exception}".format(file=jsonFile, exception=ex))
+            logger.error(self, "Failed to load {file}: {exception}".format(file=json_file, exception=ex))
             return None
         scenes = json_config.get('scenes', [json_config])
         return scenes
 
     def get_start_scene(self):
+        """Returns the scene defined as a start scene"""
         return self.config.get('start-scene', 'main')
 
     def get_player_config(self):
+        """Retrieves the player's configuration"""
         return self.config.get('player', None)
 
     def get_global_audio_properties(self):
+        """Returns the global audio properties"""
         return self.config.get("audio-properties", {})
 
     def get_control_resources(self):
+        """Returns the control (input) resources"""
         try:
             return self.config["resources"]["controls"]
         except KeyError:
@@ -75,69 +94,65 @@ class GameConfig():
             return None
 
     def get_library_path(self):
+        """returns library path"""
         return os.path.join(os.path.abspath(constants.CONFIG_RESOURCE_DIR), platform.system().lower(), platform.architecture()[0])
 
     def get_log_name(self):
-        return self.__c;ass__.__name__
+        """Returns the name used for logging"""
+        return self.__class__.__name__
 
 
 def initialize(file):
-  global _instance
-
-  if _instance is not None:
-    return True
-  _instance = GameConfig(file)
-  if _instance and _instance.init() is True:
-    return True
-  return False
+    """Initializes gameconfig singleton"""
+    if _INSTANCE is not None:
+        return True
+    _INSTANCE = GameConfig(file)
+    if _INSTANCE and _INSTANCE.init() is True:
+        return True
+    return False
 
 
 def get_library_path():
     """Returns the path to 3rd party libraries (DLL, DyLib, SO)."""
-    global _instance
-    if _instance is not None:
-        return _instance.get_library_path()
+    if _INSTANCE is not None:
+        return _INSTANCE.get_library_path()
     return ""
 
 def get_player_config():
     """Returns the player configuration."""
-    global _instance
-    return _instance.get_player_config()
+    return _INSTANCE.get_player_config()
 
 def get_sound_resources():
-    global _instance
-
-    if _instance is not None:
-        return _instance.get_sound_resources()
+    """Gets sound resources"""
+    if _INSTANCE is not None:
+        return _INSTANCE.get_sound_resources()
     return []
 
-def load_scene_configuration(json_file):
-    global _instance
 
-    if _instance is not None:
-        return _instance.load_scene_configuration(json_file)
+def load_scene_configuration(json_file):
+    """Loads a JSON configuration file"""
+    if _INSTANCE is not None:
+        return _INSTANCE.load_scene_configuration(json_file)
     return None
 
 def get_scene_configuration(name):
-    global _instance
-
-    if _instance is not None:
-        return _instance.get_scene_configuration(name)
+    """Gets the dictionnary associated with a scene name"""
+    if _INSTANCE is not None:
+        return _INSTANCE.get_scene_configuration(name)
     return None
 
 def get_start_scene():
-    global _instance
-
-    if _instance is not None:
-        return _instance.get_start_scene()
+    """Retrieves the start scene"""
+    if _INSTANCE is not None:
+        return _INSTANCE.get_start_scene()
     return None
 
 def get_value(config, key, cls, attrs=None):
-    global _instance
-    if _instance is None:
+    """Get value from config file"""
+    if _INSTANCE is None:
         raise RuntimeError("Game configuration object not initialized")
     if config is None:
-        config = _instance.config
+        config = _INSTANCE.config
     mandatory = False
     default_value = None
     if attrs is not None:
@@ -156,25 +171,24 @@ def get_value(config, key, cls, attrs=None):
     min_value = attrs.get("minValue", None)
     max_value = attrs.get("maxValue", None)
     if min_value is not None and min_value > ret:
-        raise RuntimeError("Configuration error: The minimum allowed value for {key} is {min}".format(key=key, min=min_value))
+        raise RuntimeError(f"Configuration error: The minimum allowed value for {key} is {min_value}")
     if max_value is not None and max_value < ret:
-        raise RuntimeError("Configuration error: The maximum allowed value for {key} is {max}".format(key=key, max=max_value))
+        raise RuntimeError(f"Configuration error: The maximum allowed value for {key} is {max_value}")
 
     list_count = attrs.get("elements", None)
     if list_count is not None and isinstance(ret, list) and len(ret) < list_count:
-        raise RuntimeError("Configuration error: The {key} list has to contain at least {count} elements".format(key=key, count=list_count))
+        raise RuntimeError(f"Configuration error: The {key} list has to contain at least {list_count} elements")
 
     # sound and music property checks
     if key.endswith("sound") or key.endswith("music"):
-        volume = getValue(config, "%s-volume" % key, float, {"defaultValue": constants.AUDIO_DEFAULT_SOUND_VOLUME})
+        volume = get_value(config, "%s-volume" % key, float,
+                          {"defaultValue": constants.AUDIO_FX_VOLUME})
         return (ret, volume)
     return ret
 
 
 def get_global_audio_properties():
     """Returns a dictionary containing audio engine properties."""
-    global _instance
-
-    if _instance is not None:
-        return _instance.get_global_audio_properties()
+    if _INSTANCE is not None:
+        return _INSTANCE.get_global_audio_properties()
     return {}
