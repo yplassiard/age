@@ -5,7 +5,7 @@ import constants
 import gameconfig
 import event_manager
 
-class Object(object):
+class Object:
 	"""Base class for all objects present within the game."""
 	name = None
 	position = None
@@ -14,7 +14,6 @@ class Object(object):
 	size = (1, 1)
 	minDistance = 1
 	maxDistance = 10
-	
 
 	def __init__(self, name, config):
 		self.name = name
@@ -26,8 +25,6 @@ class Object(object):
 		self.interactDistance = gameconfig.get_value(config, "interact-distance", float, {"defaultValue": -1})
 		self.minDistance = gameconfig.get_value(config, "min-distance", float, {"defaultValue": 0.5})
 		self.maxDistance = gameconfig.get_value(config, "max-distance", float, {"defaultValue": constants.OBJECT_MAX_DISTANCE})
-		
-				
 
 	def getInteractionDistance(self):
 		"""Automatically interact with this object if the distance is below this value"""
@@ -63,9 +60,10 @@ class Seizable(Object):
 	
 	def __init__(self, name, config):
 		super().__init__(name, config)
-		self.quantity = gameconfig.get_value(config, "quantity", int, {"defaultValue": 1,
-																																			"minValue": 1})
-				
+		self.quantity = gameconfig.get_value(config, "quantity", int,
+                                                     {"defaultValue": 1,
+						      "minValue": 1})
+
 	def use(self, target):
 		"""Called when this object is used on another object."""
 		return False
@@ -75,7 +73,8 @@ class Openable(Object):
 	"""This object can be opened (like doors or chests)"""
 	def __init__(self, name, config):
 		super().__init__(name, config)
-		self.locked = gameconfig.get_value(config, 'locked', bool, {"defaultValue": False})
+		self.locked = gameconfig.get_value(config, 'locked', bool,
+                                                   {"defaultValue": False})
 		if self.locked:
 			self.lockState = constants.LOCKSTATE_LOCKED
 		else:
@@ -186,7 +185,7 @@ i.e when using this object."""
 		if scene is None:
 			raise RuntimeError("No story scene configured for this NPC.")
 		import scene_manager
-		if scene_manager.sceneExists(scene) is False:
+		if scene_manager.scene_exists(scene) is False:
 			logger.error(self, "{scene} not found.".format(scene=scene))
 			raise RuntimeError("Invalid NPC configuration: Scene not found")
 		self.storyScene = scene
@@ -216,7 +215,7 @@ i.e when using this object."""
 			self.hitCount = 0
 			import scene_manager
 
-			if scene_manager.sceneExists(self.hitScene) is False:
+			if scene_manager.scene_exists(self.hitScene) is False:
 				logger.error(self, "{scene} does not exist".format(scene=self.hitScene))
 				return False
 			scene_manager.stackScene(self.hitScene)

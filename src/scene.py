@@ -112,6 +112,7 @@ elapsed, the event_interval method will be called.
 Note: This event is not called when the scene is not active.
 """
     _interval = 0
+    _next_tick = 0
     
     def __init__(self, name, config):
         super().__init__(name, config)
@@ -121,6 +122,17 @@ Note: This event is not called when the scene is not active.
                 msg = "Invalid interval value {value}; has to be integer, minimum is {minValue}".format(value=self._interval, minValue=constants.SCENE_MININUM_INTERVAL)
                 logger.error(self, msg)
                 raise RuntimeError(msg)
+    def set_next_tick(self, tick):
+        """Updates the next tick"""
+        self._next_tick = tick
+
+    def get_next_tick(self):
+        """Returns the actual tick"""
+        return self._next_tick
+
+    def update_next_tick(self, tick):
+        self._next_tick = tick
+        
     def activate(self, silent=False, params=None):
         super().activate(silent, params)
         event_manager.post(event_manager.SCENE_INTERVAL_ACTIVATE, {"scene": self})
@@ -409,7 +421,7 @@ class MapRegionScene(IntervalScene):
                 for region in self.regionLinks:
                     if region.get("name", None) == enter:
                         pos = gameconfig.get_value(region, "position", list, {"elements": 4})
-                        msg = "Endering {name} {enter}: {pos}".format(name=self.name, enter=enter, pos=pos)
+                        msg = "Entering {name} {enter}: {pos}".format(name=self.name, enter=enter, pos=pos)
                         logger.debug(self, msg)
                         speech.speak(msg)
                         if pos[0] == pos[2]:
@@ -565,8 +577,9 @@ class MapRegionScene(IntervalScene):
             pos = obj.getPosition()
             size = obj.getSize()
             if newPos[0] > pos[0] - size[0] and newPos[0] < pos[0] + size[0] and newPos[1] > pos[1] - size[1] and newPos[1] < pos[1] + size[1]:
-                event_manager.post(event_manager.OBJECT_HIT, {"character": self.player,
-                                                                                                        "obj": obj})
+                event_manager.post(event_manager.OBJECT_HIT,
+                                   {"character": self.player,
+                                    "obj": obj})
                 return False
             
             
@@ -628,7 +641,7 @@ class MapRegionScene(IntervalScene):
         import scene_manager
         
 
-        if scene_manager.getActiveScene() != self or core.isInAnimation():
+        if scene_manager.get_active_scene() != self or core.is_in_animation():
             return
         if self.cameraMode == constants.CAMERA_SUBJECTIVE and (self.isTurningLeft or self.isTurningRight):
             shouldUpdateListener = False

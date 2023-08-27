@@ -60,26 +60,26 @@ class Player(Object):
 		return "Player(%s)" % self.name
 	def handlePlayerMovements(self):
 		if self.walking:
-			if core.currentTicks - self.staminaDecrementTicks > self.staminaDecrementTime:
+			if core.get_current_ticks() - self.staminaDecrementTicks > self.staminaDecrementTime:
 				self.stamina -= self.staminaDecrement
-				self.staminaDecrementTicks = core.currentTicks
+				self.staminaDecrementTicks = core.get_current_ticks()
 				event_manager.post(event_manager.CHARACTER_ATTRIBUTE_CHANGE, {"attribute": "stamina",
 																															 "type": "decrease",
 																															 "value": self.stamina})
-			if self.stamina > 0 and core.currentTicks - self.walkingTicks > self.heroWalkTime:
+			if self.stamina > 0 and core.get_current_ticks() - self.walkingTicks > self.heroWalkTime:
 				event_manager.post(event_manager.SCENE_MOVE, {"obj": self})
 			elif self.stamina <= 0:
 				logger.info(self, "Too tired to walk")
 				self.stamina = 0
 				self.walking = False
 		elif self.running:
-			if core.currentTicks - self.staminaDecrementTicks > self.staminaDecrementRunTime:
+			if core.current_ticks() - self.staminaDecrementTicks > self.staminaDecrementRunTime:
 				self.stamina -= self.staminaDecrement
-				self.staminaDecrementTicks = core.currentTicks
+				self.staminaDecrementTicks = core.get_current_ticks()
 				event_manager.post(event_manager.HERO_ATTRIBUTE_CHANGE, {"attribute": "stamina",
 																															 "type": "decrease",
 																															 "value": self.stamina})
-			if self.stamina > 0 and core.currentTicks - self.runningTicks > self.heroRunTime:
+			if self.stamina > 0 and core.get_current_ticks() - self.runningTicks > self.heroRunTime:
 				event_manager.post(event_manager.SCENE_MOVE, {"obj": self})
 			elif self.stamina <= 0:
 				logger.info(self, "Too tired to run")
@@ -122,11 +122,11 @@ class Player(Object):
 	def event_scene_interval_tick(self, evt):
 		if self.stamina == self.maxStamina:
 			return True
-		delta = core.currentTicks - self.staminaTicks
+		delta = core.get_current_ticks() - self.staminaTicks
 		if delta > self.staminaRecoveryTime:
 			self.stamina += self.staminaIncrement
 			logger.info(self, "Recovering stamina {s}%, delta+{delta}".format(s=(self.stamina / self.maxStamina * 100), delta=delta))
-			self.staminaTicks = core.currentTicks
+			self.staminaTicks = core.get_current_ticks()
 		if self.stamina >= self.maxStamina:
 			logger.info(self, "Stamina recovered")
 			self.stamina = self.maxStamina

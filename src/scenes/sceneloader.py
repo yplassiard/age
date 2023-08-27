@@ -21,7 +21,7 @@ class Scene(scene.MenuScene):
         idx = 0
         self.choices = []
         self.links = {}
-        for name in scene_manager._instance.scenes:
+        for name in scene_manager._INSTANCE._scenes:
             self.links[str(idx)] = name
             self.choices.append(name)
             idx += 1

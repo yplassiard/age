@@ -145,15 +145,15 @@ def error(system, message):
 def exception(system, message, exception):
         global _instance
         if _instance is not None:
-                msg = "{message}: {exception}".format(message=message, exception=exception)
+                msg = f"{message}: {exception}"
                 import speech
                 try:
                         speech.speak(msg)
                 except:
                          pass
-                _instance.log("Exception", system, msg)
-                print("Exception", system, msg)
-                traceback.print_tb(exception.__traceback__)
+                _instance.log("Exception", system,
+                              "\n".join(traceback.format_exception(exception.__class__,
+                                                                   exception, exception.__traceback__)))
         else:
                 print("Log not initialized: {system}: {message}".format(system=system, message=message))
 

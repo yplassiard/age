@@ -23,14 +23,14 @@ class ObjectManager(object):
 
 	def load(self, config):
 		"""Loads all defined objects within the given configuration."""
-		name = gameconfig.getValue(config, "name", str)
+		name = gameconfig.get_value(config, "name", str)
 		if name is None:
 			logger.error(self, "Each object has to be named with a \"name\" property")
 			return False
 		if self.objects.get(name, None) is not None:
 			logger.error(self, "The object's name \"{name}\" is already defined".format(name=name))
 			return False
-		type = gameconfig.getValue(config, "type", str)
+		type = gameconfig.get_value(config, "type", str)
 		cls = objectsMap.get(type, None)
 		if cls is None:
 			logger.error(self, "{name}'s type {type} is not known".format(name=name, type=type))
