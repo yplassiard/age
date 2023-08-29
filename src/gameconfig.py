@@ -104,6 +104,8 @@ class GameConfig():
 
 def initialize(file):
     """Initializes gameconfig singleton"""
+    global _INSTANCE
+    
     if _INSTANCE is not None:
         return True
     _INSTANCE = GameConfig(file)

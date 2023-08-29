@@ -378,10 +378,10 @@ class MapRegionScene(IntervalScene):
         return "MapRegionScene(%s)" % self.name
 
     def loadObjects(self):
-        import objectManager
+        import object_manager
         ret = True
         for objConfig in self.objectConfigs:
-            obj = objectManager.addObject(objConfig)
+            obj = object_manager.addObject(objConfig)
             if obj is False:
                 ret = False
                 continue
@@ -566,9 +566,9 @@ class MapRegionScene(IntervalScene):
         if newPos[0] == 0 or newPos[0] == self.width or newPos[1] == 0 or newPos[1] == self.height:
             event_manager.post(event_manager.CHARACTER_HIT, {"type": "wall"})
             return False
-        import objectManager
+        import object_manager
 
-        objs = objectManager.getNearestObjects(newPos, self.player, self.objects)
+        objs = object_manager.getNearestObjects(newPos, self.player, self.objects)
         if objs is not None and len(objs) > 0:
             distance,obj = objs[0]
             pos = obj.getPosition()
@@ -617,8 +617,8 @@ class MapRegionScene(IntervalScene):
         
         # now, let's see what's on this new position
 
-        import objectManager
-        objs = objectManager.getNearestObjects(self.playerPosition, self.player, self.objects)
+        import object_manager
+        objs = object_manager.getNearestObjects(self.playerPosition, self.player, self.objects)
         if objs is not None and len(objs) > 0:
             distance,obj = objs[0] # takes the nearest object
             logger.info(self, "{name} at {distance}".format(name=obj, distance=distance))
@@ -659,8 +659,8 @@ class MapRegionScene(IntervalScene):
         if (self.isWalking and core.get_current_ticks() - self.playerMoveTicks > constants.HERO_WALK_TIME) or (self.isRunning and core.get_current_ticks() - self.playerMoveTicks > constants.HERO_RUN_TIME):
             self.onWalk(self.isRunning)
         if core.get_current_ticks() - self.objectEchoTick > constants.OBJECT_ECHO_TIME:
-            import objectManager
-            objs = objectManager.getNearestObjects(self.playerPosition, self.player, self.objects)
+            import object_manager
+            objs = object_manager.getNearestObjects(self.playerPosition, self.player, self.objects)
             for distance,obj in objs:
                 diffY = obj.position[1] - self.playerPosition[1]
                 if diffY > 5:
@@ -696,9 +696,9 @@ class MapRegionScene(IntervalScene):
     def get_next_scene(self):
         return self.nextScene
     def onAction(self):
-        import objectManager
+        import object_manager
         
-        objs = objectManager.getNearestObjects(self.playerPosition, self.player, self.objects)
+        objs = object_manager.getNearestObjects(self.playerPosition, self.player, self.objects)
         if len(objs) > 0:
             distance,obj = objs[0]
             if obj is not None:

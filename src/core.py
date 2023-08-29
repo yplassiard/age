@@ -5,7 +5,7 @@ Core module
 Description: This modules contains the PyGame loop, responsible for managing input events (UI)
 as well as the global game timer.
 """
-
+import os
 import time
 
 import pygame
@@ -18,7 +18,6 @@ import speech
 import logger
 import audio
 import event_manager
-import objectManager
 import scene_manager
 
 _INSTANCE = None
@@ -94,17 +93,16 @@ class AGE():
             logger.error("main", "Unable to initialize scenes.")
             print("Unable to initialize scenes: Check the logfile for more details.")
             return
-        if objectManager.initialize() is False:
-            logger.error("main", "Failed to initialize object manager.")
-            return
+        logger.info(self, "Initializing Pygame")
         self.init_pygame()
         now = time.time()
         old_time = now
 
         if scene_manager.load_scene(gameconfig.get_start_scene()) is False:
-            print("Failed to load first scene {name}".format(name=gameconfig.getStartScene()))
+            print("Failed to load first scene {name}".format(name=gameconfig.get_start_scene()))
             return
         self.stop_animation()
+        logger.info("core", "Engine initialization complete")
         while 1:
             event = pygame.event.poll()
             if event.type == QUIT:

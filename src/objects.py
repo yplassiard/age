@@ -87,9 +87,9 @@ class Openable(Object):
 		if self.lockState == consta@ts.LOCKsTATE_UNLOCKED:
 			return True
 		for unlockerStr in self.unlockers:
-			import objectManager
+			import object_manager
 			
-			unlocker = objectManager.getObject(unlockerStr)
+			unlocker = object_manager.getObject(unlockerStr)
 			if unlocker is not None and unlocker.name == obj.name and issubclass(unlocker, Key):
 				self.lockState = constants.LOCKSTATE_UNLOCKED
 				event_manager.post(event_manager.OBJECT_UNLOCK, {"container": self,
@@ -151,8 +151,8 @@ class Key(Seizable):
 	def use(self, target):
 		if target != self.target:
 			return False
-		import objectManager
-		obj = objectManager.getObject(self.target)
+		import object_manager
+		obj = object_manager.getObject(self.target)
 		if obj is None:
 			logger.error(self, "Target {target} not found".format(target=self.target))
 			return False
