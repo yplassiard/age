@@ -50,23 +50,24 @@ class SpeechThread(threading.Thread):
 class NSSpeech(speech.SpeechSupport):
     ss = None
     statusThread = None
+
     def __init__(self):
         self.ss = NSSpeechSynthesizer.alloc().init()
         self.statusThread = SpeechThread(self.ss)
-        event_manager.addListener(self)
+        event_manager.add_listener(self)
         self.statusThread.start()
 
     def speak(self, text):
         self.statusThread.msgQueue.put(text)
         logger.info(self, "speak({text})".format(text=text))
+
     def isActive(self):
         return self.ss != None
     
 
     def cancelSpeech(self):
         self.statusThread.cancelSpeech()
+
     def event_quit_game(self, evt):
         self.statusThread.msgQueue.put(THREAD_QUIT)
         self.statusThread.join()
-    
-    
